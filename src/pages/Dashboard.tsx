@@ -7,7 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 const Dashboard = () => {
-  const { user, loading, isAuthenticated, isTeacher } = useAuth();
+  const { user, loading, isAuthenticated, isTeacher, needsOnboarding } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,6 +15,12 @@ const Dashboard = () => {
       navigate('/auth');
     }
   }, [loading, isAuthenticated, navigate]);
+
+  useEffect(() => {
+    if (!loading && isAuthenticated && needsOnboarding) {
+      navigate('/teacher-onboarding');
+    }
+  }, [loading, isAuthenticated, needsOnboarding, navigate]);
 
   if (loading) {
     return (

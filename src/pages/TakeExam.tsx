@@ -215,6 +215,7 @@ const TakeExam = () => {
     try {
       const { earnedPoints, totalPoints } = calculateScore();
       const score = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
+      const passed = score >= 50; // 50% pass threshold
 
       const { error } = await supabase
         .from('exam_attempts')
@@ -223,6 +224,7 @@ const TakeExam = () => {
           score,
           total_points: totalPoints,
           is_completed: true,
+          passed,
           end_time: new Date().toISOString()
         })
         .eq('id', attempt.id);
@@ -230,8 +232,11 @@ const TakeExam = () => {
       if (error) throw error;
 
       toast({
-        title: "Exam Submitted",
-        description: `Your score: ${score.toFixed(1)}%`,
+        title: passed ? "Congratulations!" : "Exam Submitted",
+        description: passed 
+          ? `You passed with ${score.toFixed(1)}%!` 
+          : `Your score: ${score.toFixed(1)}%. You need 50% to pass.`,
+        variant: passed ? "default" : "destructive",
       });
 
       navigate('/dashboard');

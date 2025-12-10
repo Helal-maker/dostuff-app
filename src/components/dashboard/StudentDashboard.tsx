@@ -15,7 +15,8 @@ import {
   Search,
   Calendar,
   Target,
-  TrendingUp
+  TrendingUp,
+  User
 } from "lucide-react";
 
 interface StudentDashboardProps {
@@ -34,6 +35,7 @@ interface ExamAttempt {
   start_time: string;
   end_time: string;
   is_completed: boolean;
+  passed: boolean;
 }
 
 const StudentDashboard = ({ user }: StudentDashboardProps) => {
@@ -138,14 +140,24 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
             Join exams and track your progress
           </p>
         </div>
-        <Button
-          onClick={handleSignOut}
-          variant="outline"
-          size="lg"
-        >
-          <LogOut className="w-5 h-5 mr-2" />
-          Sign Out
-        </Button>
+        <div className="flex gap-3">
+          <Button
+            onClick={() => navigate('/profile')}
+            variant="outline"
+            size="lg"
+          >
+            <User className="w-5 h-5 mr-2" />
+            Profile
+          </Button>
+          <Button
+            onClick={handleSignOut}
+            variant="outline"
+            size="lg"
+          >
+            <LogOut className="w-5 h-5 mr-2" />
+            Sign Out
+          </Button>
+        </div>
       </div>
 
       {/* Join Exam Section */}
