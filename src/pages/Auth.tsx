@@ -7,10 +7,12 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { signIn, signUp } from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
+import { signIn } from "@/lib/auth";
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { GraduationCap, Users, ArrowLeft } from "lucide-react";
+import { OTPVerification } from "@/components/auth/OTPVerification";
 
 const Auth = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -19,15 +21,22 @@ const Auth = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<'teacher' | 'student'>('student');
+  const [showOTP, setShowOTP] = useState(false);
+  const [pendingEmail, setPendingEmail] = useState("");
+  
   const { toast } = useToast();
   const navigate = useNavigate();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, needsOnboarding, isTeacher } = useAuth();
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/dashboard');
+      if (needsOnboarding) {
+        navigate('/teacher-onboarding');
+      } else {
+        navigate('/dashboard');
+      }
     }
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, needsOnboarding, navigate]);
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -47,7 +56,6 @@ const Auth = () => {
           title: "Success",
           description: "Successfully signed in!",
         });
-        navigate('/dashboard');
       }
     } catch (error) {
       toast({
@@ -72,10 +80,29 @@ const Auth = () => {
       return;
     }
 
+    if (password.length < 6) {
+      toast({
+        title: "Error",
+        description: "Password must be at least 6 characters",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
-      const { error } = await signUp(email, password, fullName, role);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/`,
+          data: {
+            full_name: fullName,
+            role: role
+          }
+        }
+      });
       
       if (error) {
         toast({
@@ -83,12 +110,19 @@ const Auth = () => {
           description: error.message,
           variant: "destructive",
         });
+      } else if (data.user && !data.session) {
+        // OTP verification required
+        setPendingEmail(email);
+        setShowOTP(true);
+        toast({
+          title: "Check your email",
+          description: "We've sent you a verification code.",
+        });
       } else {
         toast({
           title: "Success",
-          description: "Account created successfully! Please check your email to confirm your account.",
+          description: "Account created successfully!",
         });
-        navigate('/dashboard');
       }
     } catch (error) {
       toast({
@@ -99,6 +133,14 @@ const Auth = () => {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handleOTPSuccess = () => {
+    setShowOTP(false);
+    toast({
+      title: "Email Verified!",
+      description: "Please sign in with your credentials.",
+    });
   };
 
   return (
@@ -232,6 +274,13 @@ const Auth = () => {
           </Tabs>
         </Card>
       </div>
+
+      <OTPVerification
+        email={pendingEmail}
+        isOpen={showOTP}
+        onClose={() => setShowOTP(false)}
+        onSuccess={handleOTPSuccess}
+      />
     </div>
   );
 };

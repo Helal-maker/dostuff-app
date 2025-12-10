@@ -9,6 +9,8 @@ import Dashboard from "./pages/Dashboard";
 import CreateExam from "./pages/CreateExam";
 import TakeExam from "./pages/TakeExam";
 import JoinExam from "./pages/JoinExam";
+import TeacherOnboarding from "./pages/TeacherOnboarding";
+import Profile from "./pages/Profile";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +25,8 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/teacher-onboarding" element={<TeacherOnboarding />} />
           <Route path="/create-exam" element={<CreateExam />} />
           <Route path="/exam/:shareLink" element={<TakeExam />} />
           <Route path="/join" element={<JoinExam />} />
