@@ -24,11 +24,11 @@ interface TeacherDashboardProps {
 interface Exam {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   language: string;
   created_at: string;
-  is_active: boolean;
-  share_link: string;
+  is_published: boolean;
+  share_link: string | null;
   _count?: {
     attempts: number;
     questions: number;
@@ -168,9 +168,9 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
               <BarChart3 className="w-6 h-6 text-warning" />
             </div>
             <div>
-              <p className="text-sm text-muted-foreground">Active Exams</p>
+              <p className="text-sm text-muted-foreground">Published Exams</p>
               <p className="text-2xl font-bold text-foreground">
-                {exams.filter(exam => exam.is_active).length}
+                {exams.filter(exam => exam.is_published).length}
               </p>
             </div>
           </div>
@@ -228,11 +228,11 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
                     )}
                   </div>
                   <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    exam.is_active 
+                    exam.is_published 
                       ? 'bg-success/10 text-success' 
                       : 'bg-muted/10 text-muted-foreground'
                   }`}>
-                    {exam.is_active ? 'Active' : 'Inactive'}
+                    {exam.is_published ? 'Published' : 'Draft'}
                   </div>
                 </div>
 

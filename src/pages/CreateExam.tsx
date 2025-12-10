@@ -18,12 +18,8 @@ interface ExamForm {
   description: string;
   language: "english" | "arabic";
   timeLimit: number | null;
-  attemptLimit: number;
-  isActive: boolean;
-  colorScheme: {
-    primary: string;
-    secondary: string;
-  };
+  maxAttempts: number;
+  isPublished: boolean;
 }
 
 interface Question {
@@ -45,12 +41,8 @@ const CreateExam = () => {
     description: "",
     language: "english",
     timeLimit: null,
-    attemptLimit: 1,
-    isActive: true,
-    colorScheme: {
-      primary: "#3b82f6",
-      secondary: "#6b7280"
-    }
+    maxAttempts: 1,
+    isPublished: true
   });
 
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -109,6 +101,9 @@ const CreateExam = () => {
     setIsCreating(true);
 
     try {
+      // Generate unique share link
+      const shareLink = `${Date.now().toString(36)}-${Math.random().toString(36).substring(2, 8)}`;
+
       // Create exam
       const { data: examData, error: examError } = await supabase
         .from('exams')
@@ -117,9 +112,9 @@ const CreateExam = () => {
           description: formData.description,
           language: formData.language,
           time_limit: formData.timeLimit,
-          attempt_limit: formData.attemptLimit,
-          is_active: formData.isActive,
-          color_scheme: formData.colorScheme,
+          max_attempts: formData.maxAttempts,
+          is_published: formData.isPublished,
+          share_link: shareLink,
           teacher_id: user.id
         })
         .select()
@@ -281,57 +276,23 @@ const CreateExam = () => {
                 </div>
 
                 <div>
-                  <Label htmlFor="attemptLimit">Attempt Limit</Label>
+                  <Label htmlFor="maxAttempts">Attempt Limit</Label>
                   <Input
-                    id="attemptLimit"
+                    id="maxAttempts"
                     type="number"
-                    value={formData.attemptLimit}
-                    onChange={(e) => handleFormChange('attemptLimit', parseInt(e.target.value) || 1)}
+                    value={formData.maxAttempts}
+                    onChange={(e) => handleFormChange('maxAttempts', parseInt(e.target.value) || 1)}
                     className="mt-1"
                     min="1"
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
-                  <Label htmlFor="isActive">Active Exam</Label>
+                  <Label htmlFor="isPublished">Publish Exam</Label>
                   <Switch
-                    id="isActive"
-                    checked={formData.isActive}
-                    onCheckedChange={(checked) => handleFormChange('isActive', checked)}
-                  />
-                </div>
-              </div>
-            </Card>
-
-            {/* Color Customization */}
-            <Card className="p-6 bg-gradient-card border-0 shadow-medium">
-              <h3 className="text-lg font-semibold text-foreground mb-4">Color Scheme</h3>
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="primaryColor">Primary Color</Label>
-                  <Input
-                    id="primaryColor"
-                    type="color"
-                    value={formData.colorScheme.primary}
-                    onChange={(e) => handleFormChange('colorScheme', {
-                      ...formData.colorScheme,
-                      primary: e.target.value
-                    })}
-                    className="mt-1 h-10"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="secondaryColor">Secondary Color</Label>
-                  <Input
-                    id="secondaryColor"
-                    type="color"
-                    value={formData.colorScheme.secondary}
-                    onChange={(e) => handleFormChange('colorScheme', {
-                      ...formData.colorScheme,
-                      secondary: e.target.value
-                    })}
-                    className="mt-1 h-10"
+                    id="isPublished"
+                    checked={formData.isPublished}
+                    onCheckedChange={(checked) => handleFormChange('isPublished', checked)}
                   />
                 </div>
               </div>
@@ -364,7 +325,7 @@ const CreateExam = () => {
                     <Users className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Attempts</span>
                   </div>
-                  <span className="font-medium text-foreground">{formData.attemptLimit}</span>
+                  <span className="font-medium text-foreground">{formData.maxAttempts}</span>
                 </div>
 
                 <div className="flex items-center justify-between">
@@ -372,8 +333,8 @@ const CreateExam = () => {
                     <Eye className="w-4 h-4 text-muted-foreground" />
                     <span className="text-sm text-muted-foreground">Status</span>
                   </div>
-                  <span className={`font-medium ${formData.isActive ? 'text-success' : 'text-muted-foreground'}`}>
-                    {formData.isActive ? "Active" : "Draft"}
+                  <span className={`font-medium ${formData.isPublished ? 'text-success' : 'text-muted-foreground'}`}>
+                    {formData.isPublished ? "Published" : "Draft"}
                   </span>
                 </div>
               </div>

@@ -59,8 +59,9 @@ export const getCurrentUser = async (): Promise<{ user: AuthUser | null; session
   const user: AuthUser = {
     ...session.user,
     profile: profile ? {
-      ...profile,
-      role: profile.role as 'teacher' | 'student'
+      id: profile.id,
+      role: profile.role as 'teacher' | 'student',
+      full_name: profile.full_name || ''
     } : undefined
   };
 

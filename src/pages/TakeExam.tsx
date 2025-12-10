@@ -12,11 +12,12 @@ import ExamQuestionRenderer from "@/components/exam/ExamQuestionRenderer";
 interface Exam {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   language: string;
   time_limit: number | null;
-  attempt_limit: number;
-  color_scheme: any;
+  max_attempts: number;
+  is_published: boolean;
+  share_link: string | null;
   teacher_id: string;
 }
 
@@ -31,9 +32,10 @@ interface Question {
 
 interface ExamAttempt {
   id: string;
-  attempt_number: number;
   answers: any;
   is_completed: boolean;
+  score: number | null;
+  total_points: number | null;
 }
 
 const TakeExam = () => {
@@ -83,7 +85,7 @@ const TakeExam = () => {
         .from('exams')
         .select('*')
         .eq('share_link', shareLink)
-        .eq('is_active', true)
+        .eq('is_published', true)
         .single();
 
       if (examError) {
@@ -106,18 +108,18 @@ const TakeExam = () => {
         .select('*')
         .eq('exam_id', examData.id)
         .eq('student_id', user!.id)
-        .order('attempt_number', { ascending: false });
+        .order('created_at', { ascending: false });
 
       if (attemptsError) throw attemptsError;
 
       // Check if user has reached attempt limit
-      if (attemptsData.length >= examData.attempt_limit) {
+      if (attemptsData && attemptsData.length >= (examData.max_attempts || 1)) {
         const lastAttempt = attemptsData[0];
         if (lastAttempt.is_completed) {
           setError("You have reached the maximum number of attempts for this exam");
           return;
         }
-        setAttempt(lastAttempt);
+        setAttempt(lastAttempt as ExamAttempt);
         setAnswers((lastAttempt.answers as { [key: string]: any }) || {});
       } else {
         // Create new attempt
@@ -126,18 +128,17 @@ const TakeExam = () => {
           .insert({
             exam_id: examData.id,
             student_id: user!.id,
-            attempt_number: attemptsData.length + 1,
             answers: {}
           })
           .select()
           .single();
 
         if (attemptError) throw attemptError;
-        setAttempt(newAttempt);
+        setAttempt(newAttempt as ExamAttempt);
       }
 
-      setExam(examData);
-      setQuestions(questionsData);
+      setExam(examData as Exam);
+      setQuestions((questionsData || []) as Question[]);
 
       // Set timer if exam has time limit
       if (examData.time_limit) {
@@ -326,7 +327,6 @@ const TakeExam = () => {
             answer={answers[currentQuestion.id]}
             onAnswerChange={(answer) => updateAnswer(currentQuestion.id, answer)}
             language={exam.language}
-            colorScheme={exam.color_scheme}
           />
         </Card>
 
