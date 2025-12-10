@@ -14,7 +14,175 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      exam_attempts: {
+        Row: {
+          answers: Json | null
+          created_at: string
+          end_time: string | null
+          exam_id: string
+          id: string
+          is_completed: boolean | null
+          score: number | null
+          start_time: string
+          student_id: string
+          total_points: number | null
+        }
+        Insert: {
+          answers?: Json | null
+          created_at?: string
+          end_time?: string | null
+          exam_id: string
+          id?: string
+          is_completed?: boolean | null
+          score?: number | null
+          start_time?: string
+          student_id: string
+          total_points?: number | null
+        }
+        Update: {
+          answers?: Json | null
+          created_at?: string
+          end_time?: string | null
+          exam_id?: string
+          id?: string
+          is_completed?: boolean | null
+          score?: number | null
+          start_time?: string
+          student_id?: string
+          total_points?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exam_attempts_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      exams: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          is_published: boolean | null
+          language: string
+          max_attempts: number | null
+          share_link: string | null
+          teacher_id: string
+          time_limit: number | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          language?: string
+          max_attempts?: number | null
+          share_link?: string | null
+          teacher_id: string
+          time_limit?: number | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_published?: boolean | null
+          language?: string
+          max_attempts?: number | null
+          share_link?: string | null
+          teacher_id?: string
+          time_limit?: number | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          certificate_type: string | null
+          created_at: string
+          experience_years: number | null
+          full_name: string | null
+          id: string
+          role: string
+          subject: string | null
+          teacher_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          certificate_type?: string | null
+          created_at?: string
+          experience_years?: number | null
+          full_name?: string | null
+          id?: string
+          role: string
+          subject?: string | null
+          teacher_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          certificate_type?: string | null
+          created_at?: string
+          experience_years?: number | null
+          full_name?: string | null
+          id?: string
+          role?: string
+          subject?: string | null
+          teacher_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      questions: {
+        Row: {
+          created_at: string
+          exam_id: string
+          id: string
+          order_index: number
+          points: number | null
+          question_data: Json | null
+          question_text: string
+          question_type: string
+        }
+        Insert: {
+          created_at?: string
+          exam_id: string
+          id?: string
+          order_index: number
+          points?: number | null
+          question_data?: Json | null
+          question_text: string
+          question_type: string
+        }
+        Update: {
+          created_at?: string
+          exam_id?: string
+          id?: string
+          order_index?: number
+          points?: number | null
+          question_data?: Json | null
+          question_text?: string
+          question_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "questions_exam_id_fkey"
+            columns: ["exam_id"]
+            isOneToOne: false
+            referencedRelation: "exams"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
