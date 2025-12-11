@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { GraduationCap, Users, ArrowRight, CheckCircle } from "lucide-react";
-
 const GetStartedSection = () => {
-  return (
-    <section className="py-20 bg-background">
+  return <section className="py-20 bg-background">
       <div className="container mx-auto px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">
@@ -30,31 +28,18 @@ const GetStartedSection = () => {
                 For Teachers
               </h3>
               
-              <p className="text-muted-foreground mb-6 leading-relaxed">
+              <p className="mb-6 leading-relaxed font-extrabold text-slate-950">
                 Create engaging, customizable exams with powerful analytics to track student progress.
               </p>
 
               <div className="space-y-3 mb-8">
-                {[
-                  "Create diverse question types",
-                  "Customize exam appearance",
-                  "Set timers and attempt limits",
-                  "Track detailed analytics",
-                  "Share with one-click links"
-                ].map((feature, index) => (
-                  <div key={index} className="flex items-center gap-3 text-sm">
+                {["Create diverse question types", "Customize exam appearance", "Set timers and attempt limits", "Track detailed analytics", "Share with one-click links"].map((feature, index) => <div key={index} className="flex items-center gap-3 text-sm">
                     <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
                     <span className="text-muted-foreground">{feature}</span>
-                  </div>
-                ))}
+                  </div>)}
               </div>
 
-              <Button 
-                variant="hero" 
-                size="lg" 
-                className="w-full"
-                onClick={() => window.location.href = '/auth'}
-              >
+              <Button variant="hero" size="lg" className="w-full" onClick={() => window.location.href = '/auth'}>
                 Start Creating Exams
                 <ArrowRight className="w-5 h-5" />
               </Button>
@@ -76,31 +61,18 @@ const GetStartedSection = () => {
                 For Students
               </h3>
               
-              <p className="text-muted-foreground mb-6 leading-relaxed">
+              <p className="mb-6 leading-relaxed font-extrabold text-slate-950">
                 Take engaging exams and track your progress with instant feedback and detailed results.
               </p>
 
               <div className="space-y-3 mb-8">
-                {[
-                  "Join exams with simple links",
-                  "Interactive question formats",
-                  "Instant result feedback",
-                  "Progress tracking dashboard",
-                  "Detailed exam history"
-                ].map((feature, index) => (
-                  <div key={index} className="flex items-center gap-3 text-sm">
+                {["Join exams with simple links", "Interactive question formats", "Instant result feedback", "Progress tracking dashboard", "Detailed exam history"].map((feature, index) => <div key={index} className="gap-3 text-sm items-center justify-start flex flex-row">
                     <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
                     <span className="text-muted-foreground">{feature}</span>
-                  </div>
-                ))}
+                  </div>)}
               </div>
 
-              <Button 
-                variant="gradient" 
-                size="lg" 
-                className="w-full"
-                onClick={() => window.location.href = '/auth'}
-              >
+              <Button variant="gradient" size="lg" className="w-full" onClick={() => window.location.href = '/auth'}>
                 Start Taking Exams
                 <ArrowRight className="w-5 h-5" />
               </Button>
@@ -112,8 +84,6 @@ const GetStartedSection = () => {
           </Card>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default GetStartedSection;
