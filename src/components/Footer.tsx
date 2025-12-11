@@ -27,7 +27,7 @@ const Footer = () => {
           </div>
 
           {/* Product */}
-          <div>
+          {/* <div>
             <h3 className="font-semibold mb-4">Product</h3>
             <ul className="space-y-2 text-background/70">
               <li><a href="#" className="hover:text-background transition-colors">Features</a></li>
@@ -35,7 +35,7 @@ const Footer = () => {
               <li><a href="#" className="hover:text-background transition-colors">API</a></li>
               <li><a href="#" className="hover:text-background transition-colors">Documentation</a></li>
             </ul>
-          </div>
+          </div> */}
 
           {/* Support */}
           <div>
