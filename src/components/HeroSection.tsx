@@ -1,8 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BookOpen, Users, Trophy } from "lucide-react";
 import heroImage from "@/assets/hero-education.jpg";
+import { useNavigate } from "react-router-dom";
+
 const HeroSection = () => {
-  return <section className="relative min-h-screen flex items-center bg-gradient-hero overflow-hidden">
+  const navigate = useNavigate();
+  return (
+    <section className="relative min-h-screen flex items-center bg-gradient-hero overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-20 left-10 w-32 h-32 bg-accent rounded-full blur-xl animate-pulse"></div>
@@ -32,11 +36,11 @@ const HeroSection = () => {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-              <Button variant="hero" size="lg" className="text-lg px-8 py-6" onClick={() => window.location.href = '/auth'}>
+              <Button variant="hero" size="lg" className="text-lg px-8 py-6" onClick={() => navigate('/auth')}>
                 Start as Teacher
                 <ArrowRight className="w-5 h-5" />
               </Button>
-              <Button variant="gradient" size="lg" className="text-lg px-8 py-6" onClick={() => window.location.href = '/auth'}>
+              <Button variant="gradient" size="lg" className="text-lg px-8 py-6" onClick={() => navigate('/auth')}>
                 Join as Student
                 <Users className="w-5 h-5" />
               </Button>
@@ -87,6 +91,7 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
 export default HeroSection;
