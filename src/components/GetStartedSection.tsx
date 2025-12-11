@@ -1,8 +1,12 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { GraduationCap, Users, ArrowRight, CheckCircle } from "lucide-react";
+import { useNavigate } from "react-router-dom";
+
 const GetStartedSection = () => {
-  return <section className="py-20 bg-background">
+  const navigate = useNavigate();
+  return (
+    <section className="py-20 bg-background">
       <div className="container mx-auto px-6 lg:px-8">
         <div className="text-center mb-16">
           <h2 className="text-4xl lg:text-5xl font-bold mb-6">
@@ -39,7 +43,7 @@ const GetStartedSection = () => {
                   </div>)}
               </div>
 
-              <Button variant="hero" size="lg" className="w-full" onClick={() => window.location.href = '/auth'}>
+              <Button variant="hero" size="lg" className="w-full" onClick={() => navigate('/auth')}>
                 Start Creating Exams
                 <ArrowRight className="w-5 h-5" />
               </Button>
@@ -72,7 +76,7 @@ const GetStartedSection = () => {
                   </div>)}
               </div>
 
-              <Button variant="gradient" size="lg" className="w-full" onClick={() => window.location.href = '/auth'}>
+              <Button variant="gradient" size="lg" className="w-full" onClick={() => navigate('/auth')}>
                 Start Taking Exams
                 <ArrowRight className="w-5 h-5" />
               </Button>
@@ -84,6 +88,7 @@ const GetStartedSection = () => {
           </Card>
         </div>
       </div>
-    </section>;
+    </section>
+  );
 };
 export default GetStartedSection;
