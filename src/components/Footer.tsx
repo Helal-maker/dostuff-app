@@ -16,10 +16,10 @@ const Footer = () => {
               Create engaging assessments and track progress with ease.
             </p>
             <div className="flex gap-4">
-              <a href="oryno80@gmail.com" className="w-10 h-10 bg-background/10 rounded-lg flex items-center justify-center hover:bg-background/20 transition-colors">
+              <a href="https://oryno-co.pages.dev/contact" className="w-10 h-10 bg-background/10 rounded-lg flex items-center justify-center hover:bg-background/20 transition-colors">
                 <Mail className="w-5 h-5" />
               </a>
-              <a href="buymeacoffee.com/oryno801" className="w-10 h-10 bg-background/10 rounded-lg flex items-center justify-center hover:bg-background/20 transition-colors">
+              <a href="https://buymeacoffee.com/oryno801" className="w-10 h-10 bg-background/10 rounded-lg flex items-center justify-center hover:bg-background/20 transition-colors">
                 <Coffee className="w-5 h-5" />
               </a>
               
