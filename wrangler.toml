@@ -1,0 +1,7 @@
+name = "do_stuff"
+type = "javascript"
+workers_dev = false
+
+[build]
+command = "npm run build"
+directory = "dist"
