@@ -105,65 +105,104 @@ const ExamQuestionRenderer = ({ question, answer, onAnswerChange, language, colo
         );
 
       case "matching":
-        const leftItems = question.question_data.pairs?.map((pair: any) => pair.left) || [];
-        const rightItems = question.question_data.pairs?.map((pair: any) => pair.right) || [];
+        const pairs = question.question_data.pairs || [];
+        const leftItems = pairs.map((pair: any) => pair.left);
+        // Shuffle right items for display but keep track of original indices
+        const rightItemsWithIndex = pairs.map((pair: any, idx: number) => ({ 
+          text: pair.right, 
+          originalIndex: idx 
+        }));
         const matches = answer || {};
 
         return (
           <div className="space-y-4">
             <p className="text-sm text-muted-foreground">
-              Match the items from the left column with the right column
+              Click an item from Column A, then click its match from Column B
             </p>
             
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Column A - Left items */}
               <div className="space-y-2">
                 <h4 className="font-medium text-foreground">Column A</h4>
-                {leftItems.map((item: string, index: number) => (
-                  <Card
-                    key={`left-${index}`}
-                    className="p-3 bg-card cursor-pointer hover:bg-accent/50 transition-colors"
-                    onClick={() => {
-                      // Simple click-to-match for mobile
-                      const newMatches = { ...matches };
-                      if (newMatches[index] !== undefined) {
-                        delete newMatches[index];
-                      } else {
-                        // Find first unmatched right item
-                        const usedRightItems = Object.values(newMatches);
-                        const availableRight = rightItems.findIndex((_, i) => !usedRightItems.includes(i));
-                        if (availableRight !== -1) {
-                          newMatches[index] = availableRight;
+                {leftItems.map((item: string, index: number) => {
+                  const isSelected = draggedItem === `left-${index}`;
+                  const isMatched = matches[index] !== undefined;
+                  const matchedRightText = isMatched ? pairs[matches[index]]?.right : null;
+                  
+                  return (
+                    <Card
+                      key={`left-${index}`}
+                      className={`p-3 cursor-pointer transition-all ${
+                        isSelected 
+                          ? 'bg-primary/20 border-primary ring-2 ring-primary' 
+                          : isMatched 
+                          ? 'bg-success/10 border-success' 
+                          : 'bg-card hover:bg-accent/50'
+                      }`}
+                      onClick={() => {
+                        if (isMatched) {
+                          // Remove the match
+                          const newMatches = { ...matches };
+                          delete newMatches[index];
+                          onAnswerChange(newMatches);
+                          setDraggedItem(null);
+                        } else {
+                          setDraggedItem(`left-${index}`);
                         }
-                      }
-                      onAnswerChange(newMatches);
-                    }}
-                  >
-                    <div className="flex items-center justify-between">
-                      <span>{item}</span>
-                      {matches[index] !== undefined && (
-                        <div className="w-3 h-3 bg-success rounded-full"></div>
-                      )}
-                    </div>
-                  </Card>
-                ))}
+                      }}
+                    >
+                      <div className="flex items-center justify-between">
+                        <span>{item}</span>
+                        {isMatched && (
+                          <span className="text-xs text-success font-medium">
+                            → {matchedRightText}
+                          </span>
+                        )}
+                      </div>
+                    </Card>
+                  );
+                })}
               </div>
 
+              {/* Column B - Right items */}
               <div className="space-y-2">
                 <h4 className="font-medium text-foreground">Column B</h4>
-                {rightItems.map((item: string, index: number) => (
-                  <Card
-                    key={`right-${index}`}
-                    className={`p-3 bg-card transition-colors ${
-                      Object.values(matches).includes(index) 
-                        ? 'bg-success/20 border-success' 
-                        : 'hover:bg-accent/50 cursor-pointer'
-                    }`}
-                  >
-                    <span>{item}</span>
-                  </Card>
-                ))}
+                {rightItemsWithIndex.map((item: { text: string; originalIndex: number }) => {
+                  const isUsed = Object.values(matches).includes(item.originalIndex);
+                  const isTargetable = draggedItem?.startsWith('left-') && !isUsed;
+                  
+                  return (
+                    <Card
+                      key={`right-${item.originalIndex}`}
+                      className={`p-3 transition-all ${
+                        isUsed 
+                          ? 'bg-success/10 border-success opacity-60' 
+                          : isTargetable
+                          ? 'bg-primary/10 border-primary hover:bg-primary/20 cursor-pointer'
+                          : 'bg-card'
+                      } ${!isUsed && !isTargetable ? 'opacity-50' : ''}`}
+                      onClick={() => {
+                        if (isTargetable && draggedItem) {
+                          const leftIndex = parseInt(draggedItem.replace('left-', ''));
+                          const newMatches = { ...matches, [leftIndex]: item.originalIndex };
+                          onAnswerChange(newMatches);
+                          setDraggedItem(null);
+                        }
+                      }}
+                    >
+                      <span>{item.text}</span>
+                    </Card>
+                  );
+                })}
               </div>
             </div>
+
+            {/* Instructions */}
+            {draggedItem && (
+              <p className="text-sm text-primary font-medium text-center">
+                Now click an item from Column B to create the match
+              </p>
+            )}
           </div>
         );
 

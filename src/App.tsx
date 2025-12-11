@@ -12,6 +12,7 @@ import JoinExam from "./pages/JoinExam";
 import TeacherOnboarding from "./pages/TeacherOnboarding";
 import Profile from "./pages/Profile";
 import ExamAnalytics from "./pages/ExamAnalytics";
+import ExamResults from "./pages/ExamResults";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/exam/:shareLink" element={<TakeExam />} />
           <Route path="/join" element={<JoinExam />} />
           <Route path="/exam-analytics/:examId" element={<ExamAnalytics />} />
+          <Route path="/exam-results/:attemptId" element={<ExamResults />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

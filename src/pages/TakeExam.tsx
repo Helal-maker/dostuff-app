@@ -202,7 +202,30 @@ const TakeExam = () => {
               earnedPoints += question.points;
             }
             break;
-          // Add more scoring logic for other question types
+          case "matching":
+            // For matching, check each pair
+            const pairs = question.question_data.pairs || [];
+            let correctMatches = 0;
+            if (typeof answer === 'object' && answer !== null) {
+              Object.entries(answer).forEach(([leftIdx, rightIdx]) => {
+                // Correct match means left index equals right index (original pair)
+                if (parseInt(leftIdx as string) === rightIdx) {
+                  correctMatches++;
+                }
+              });
+            }
+            // Partial credit based on correct matches
+            if (pairs.length > 0) {
+              earnedPoints += (correctMatches / pairs.length) * question.points;
+            }
+            break;
+          case "translate":
+            const correctTranslation = question.question_data.correctAnswer?.toLowerCase().trim() || "";
+            const userTranslation = answer?.toString().toLowerCase().trim() || "";
+            if (userTranslation === correctTranslation) {
+              earnedPoints += question.points;
+            }
+            break;
         }
       }
     });
@@ -220,7 +243,7 @@ const TakeExam = () => {
       const score = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
       const passed = score >= 50; // 50% pass threshold
 
-      const { error } = await supabase
+      const { data: updatedAttempt, error } = await supabase
         .from('exam_attempts')
         .update({
           answers,
@@ -230,7 +253,9 @@ const TakeExam = () => {
           passed,
           end_time: new Date().toISOString()
         })
-        .eq('id', attempt.id);
+        .eq('id', attempt.id)
+        .select()
+        .single();
 
       if (error) throw error;
 
@@ -242,12 +267,13 @@ const TakeExam = () => {
         variant: passed ? "default" : "destructive",
       });
 
-      navigate('/dashboard');
+      // Navigate to results page
+      navigate(`/exam-results/${attempt.id}`);
     } catch (error) {
       console.error('Error submitting exam:', error);
       toast({
         title: "Error",
-        description: "Failed to submit exam",
+        description: "Failed to submit exam. Please try again.",
         variant: "destructive",
       });
     } finally {
