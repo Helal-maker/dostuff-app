@@ -91,8 +91,32 @@ const ExamAnalytics = () => {
 
       if (attemptsError) throw attemptsError;
 
+      // Get student profiles for names
+      const studentIds = [...new Set((attemptsData || []).map(a => a.student_id))];
+      
+      let profilesMap: { [key: string]: { full_name: string | null } } = {};
+      
+      if (studentIds.length > 0) {
+        const { data: profilesData } = await supabase
+          .from('profiles')
+          .select('user_id, full_name')
+          .in('user_id', studentIds);
+        
+        if (profilesData) {
+          profilesData.forEach(profile => {
+            profilesMap[profile.user_id] = { full_name: profile.full_name };
+          });
+        }
+      }
+
+      // Merge student names into attempts
+      const attemptsWithNames = (attemptsData || []).map(attempt => ({
+        ...attempt,
+        student_name: profilesMap[attempt.student_id]?.full_name || 'Unknown Student'
+      }));
+
       setExam(examData as Exam);
-      setAttempts((attemptsData || []) as StudentAttempt[]);
+      setAttempts(attemptsWithNames as StudentAttempt[]);
     } catch (error) {
       console.error('Error loading analytics:', error);
       toast({
@@ -228,7 +252,7 @@ const ExamAnalytics = () => {
               <table className="w-full">
                 <thead className="bg-muted/50">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Student ID</th>
+                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Student Name</th>
                     <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Score</th>
                     <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Status</th>
                     <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Time Taken</th>
@@ -239,8 +263,8 @@ const ExamAnalytics = () => {
                   {attempts.map((attempt) => (
                     <tr key={attempt.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-6 py-4">
-                        <span className="font-mono text-sm text-foreground">
-                          {attempt.student_id.slice(0, 8)}...
+                        <span className="font-medium text-foreground">
+                          {attempt.student_name || 'Unknown Student'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
