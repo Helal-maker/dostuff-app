@@ -22,6 +22,7 @@ interface ExamResult {
   passed: boolean | null;
   start_time: string;
   end_time: string | null;
+  answers?: any;
   exam: {
     title: string;
     description: string | null;
@@ -35,6 +36,7 @@ const ExamResults = () => {
   const { user, loading: authLoading } = useAuth();
   
   const [result, setResult] = useState<ExamResult | null>(null);
+  const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -77,6 +79,19 @@ const ExamResults = () => {
       }
 
       setResult(data as unknown as ExamResult);
+      // fetch questions for review
+      try {
+        const { data: qData, error: qError } = await supabase
+          .from('questions')
+          .select('*')
+          .eq('exam_id', data.exam.id)
+          .order('order_index');
+
+        if (qError) throw qError;
+        setQuestions((qData || []) as any[]);
+      } catch (err) {
+        console.error('Error loading questions for review:', err);
+      }
     } catch (error) {
       console.error('Error loading result:', error);
       navigate('/dashboard');
@@ -91,6 +106,40 @@ const ExamResults = () => {
     const minutes = Math.floor(diff / 60000);
     const seconds = Math.floor((diff % 60000) / 1000);
     return `${minutes}m ${seconds}s`;
+  };
+
+  const isCorrect = (question: any, userAnswer: any) => {
+    if (userAnswer === undefined || userAnswer === null || userAnswer === "") return false;
+
+    const qdata = question.question_data || {};
+    switch (question.question_type) {
+      case 'multiple_choice':
+      case 'true_false':
+        return userAnswer === qdata.correctAnswer;
+      case 'fill_blank':
+      case 'complete': {
+        const correct = (qdata.correctAnswer || '').toString();
+        const ua = (userAnswer || '').toString();
+        if (qdata.caseSensitive) return ua === correct;
+        return ua.toLowerCase() === correct.toLowerCase();
+      }
+      case 'matching': {
+        const pairs = qdata.pairs || [];
+        if (!pairs.length || typeof userAnswer !== 'object') return false;
+        let correctMatches = 0;
+        Object.entries(userAnswer).forEach(([leftIdx, rightIdx]) => {
+          if (parseInt(leftIdx as string) === rightIdx) correctMatches++;
+        });
+        return correctMatches === pairs.length;
+      }
+      case 'translate': {
+        const correct = (qdata.correctAnswer || '').toString().trim().toLowerCase();
+        const ua = (userAnswer || '').toString().trim().toLowerCase();
+        return ua === correct;
+      }
+      default:
+        return false;
+    }
   };
 
   if (authLoading || loading) {
@@ -190,6 +239,43 @@ const ExamResults = () => {
           Continue to Dashboard
           <ArrowRight className="w-5 h-5 ml-2" />
         </Button>
+        {/* Review Section */}
+        <div className="mt-8 text-left">
+          <h2 className="text-xl font-semibold mb-4">Review Questions</h2>
+          {questions.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No questions available for review.</p>
+          ) : (
+            <div className="space-y-4">
+              {questions.map((q) => {
+                const userAnswer = (result as any).answers?.[q.id];
+                const correct = isCorrect(q, userAnswer);
+                return (
+                  <Card key={q.id} className="p-4 bg-muted/30 border-0">
+                    <div className="flex items-start gap-4">
+                      <div className="mt-1">
+                        {correct ? (
+                          <CheckCircle className="w-6 h-6 text-success" />
+                        ) : (
+                          <XCircle className="w-6 h-6 text-destructive" />
+                        )}
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-medium text-foreground mb-1">{q.question_text}</p>
+                        <div className="text-sm text-muted-foreground mb-2">
+                          <p><strong>Your answer:</strong> {typeof userAnswer === 'object' ? JSON.stringify(userAnswer) : (userAnswer ?? '—')}</p>
+                          <p><strong>Correct answer:</strong> {q.question_data?.correctAnswer ?? '—'}</p>
+                        </div>
+                        <p className={`text-sm ${correct ? 'text-success' : 'text-destructive'}`}>
+                          {correct ? 'Correct — good job!' : 'Incorrect — review this topic and try similar questions to improve.'}
+                        </p>
+                      </div>
+                    </div>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </Card>
     </div>
   );

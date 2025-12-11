@@ -247,8 +247,8 @@ const TakeExam = () => {
         .from('exam_attempts')
         .update({
           answers,
-          score,
-          total_points: totalPoints,
+          score: Math.round(score * 100) / 100, // Round to 2 decimal places
+          total_points: Math.round(totalPoints * 100) / 100, // Round to 2 decimal places
           is_completed: true,
           passed,
           end_time: new Date().toISOString()

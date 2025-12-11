@@ -301,7 +301,7 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
                       </div>
                     </div>
                     <Button
-                      onClick={() => navigate(`/exam-result/${attempt.id}`)}
+                      onClick={() => navigate(`/exam-results/${attempt.id}`)}
                       variant="outline"
                       size="sm"
                     >
