@@ -1,10 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { ArrowRight, BookOpen, Users, Trophy } from "lucide-react";
 import heroImage from "@/assets/hero-education.jpg";
-
 const HeroSection = () => {
-  return (
-    <section className="relative min-h-screen flex items-center bg-gradient-hero overflow-hidden">
+  return <section className="relative min-h-screen flex items-center bg-gradient-hero overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-20 left-10 w-32 h-32 bg-accent rounded-full blur-xl animate-pulse"></div>
@@ -17,10 +15,8 @@ const HeroSection = () => {
           {/* Text Content */}
           <div className="text-center lg:text-left">
             <div className="inline-flex items-center gap-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-soft mb-6">
-              <BookOpen className="w-4 h-4 text-primary" />
-              <span className="text-sm font-medium text-muted-foreground">
-                Duolingo-Style Exam Platform
-              </span>
+              <BookOpen className="text-primary h-[25px] w-[25px]" />
+              <span className="font-medium text-xl text-black"> Exam Platform</span>
             </div>
 
             <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
@@ -30,27 +26,17 @@ const HeroSection = () => {
               </span>
             </h1>
 
-            <p className="text-xl lg:text-2xl text-muted-foreground mb-8 leading-relaxed max-w-2xl">
+            <p className="text-xl lg:text-2xl mb-8 leading-relaxed max-w-2xl text-center font-bold text-primary-foreground">
               Create engaging, interactive exams with multiple question types.
               From multiple choice to translations - make learning fun and assessment effective.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center lg:justify-start mb-12">
-              <Button 
-                variant="hero" 
-                size="lg" 
-                className="text-lg px-8 py-6"
-                onClick={() => window.location.href = '/auth'}
-              >
+              <Button variant="hero" size="lg" className="text-lg px-8 py-6" onClick={() => window.location.href = '/auth'}>
                 Start as Teacher
                 <ArrowRight className="w-5 h-5" />
               </Button>
-              <Button 
-                variant="gradient" 
-                size="lg" 
-                className="text-lg px-8 py-6"
-                onClick={() => window.location.href = '/auth'}
-              >
+              <Button variant="gradient" size="lg" className="text-lg px-8 py-6" onClick={() => window.location.href = '/auth'}>
                 Join as Student
                 <Users className="w-5 h-5" />
               </Button>
@@ -63,8 +49,8 @@ const HeroSection = () => {
                   <BookOpen className="w-6 h-6 text-primary" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Multiple Formats</h3>
-                  <p className="text-sm text-muted-foreground">10+ question types</p>
+                  <h3 className="text-foreground font-bold">Multiple Formats</h3>
+                  <p className="text-sm text-primary font-semibold">10+ question types</p>
                 </div>
               </div>
 
@@ -73,8 +59,8 @@ const HeroSection = () => {
                   <Users className="w-6 h-6 text-success" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Easy Sharing</h3>
-                  <p className="text-sm text-muted-foreground">One-click exam links</p>
+                  <h3 className="text-foreground font-bold">Easy Sharing</h3>
+                  <p className="text-sm text-success font-semibold">One-click exam links</p>
                 </div>
               </div>
 
@@ -83,8 +69,8 @@ const HeroSection = () => {
                   <Trophy className="w-6 h-6 text-warning" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-foreground">Real-time Results</h3>
-                  <p className="text-sm text-muted-foreground">Instant feedback</p>
+                  <h3 className="text-foreground font-bold">Real-time Results</h3>
+                  <p className="text-sm text-warning font-bold">Instant feedback</p>
                 </div>
               </div>
             </div>
@@ -93,11 +79,7 @@ const HeroSection = () => {
           {/* Hero Image */}
           <div className="relative">
             <div className="relative bg-gradient-card rounded-3xl shadow-strong p-8 backdrop-blur-sm">
-              <img
-                src={heroImage}
-                alt="Students and teachers collaborating on educational platform"
-                className="w-full h-auto rounded-2xl shadow-medium"
-              />
+              <img src={heroImage} alt="Students and teachers collaborating on educational platform" className="w-full h-auto rounded-2xl shadow-medium" />
               <div className="absolute -top-4 -right-4 w-24 h-24 bg-gradient-primary rounded-full shadow-glow animate-bounce flex items-center justify-center">
                 <Trophy className="w-12 h-12 text-primary-foreground" />
               </div>
@@ -105,8 +87,6 @@ const HeroSection = () => {
           </div>
         </div>
       </div>
-    </section>
-  );
+    </section>;
 };
-
 export default HeroSection;
