@@ -28,7 +28,7 @@ const GetStartedSection = () => {
                 For Teachers
               </h3>
               
-              <p className="mb-6 leading-relaxed font-extrabold text-slate-950">
+              <p className="mb-6 leading-relaxed text-slate-950 font-bold">
                 Create engaging, customizable exams with powerful analytics to track student progress.
               </p>
 
@@ -61,7 +61,7 @@ const GetStartedSection = () => {
                 For Students
               </h3>
               
-              <p className="mb-6 leading-relaxed font-extrabold text-slate-950">
+              <p className="mb-6 leading-relaxed text-slate-950 font-bold">
                 Take engaging exams and track your progress with instant feedback and detailed results.
               </p>
 
