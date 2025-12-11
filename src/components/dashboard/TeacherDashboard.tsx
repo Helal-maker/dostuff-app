@@ -11,9 +11,6 @@ import {
   Users, 
   BarChart3, 
   LogOut, 
-  Calendar,
-  Eye,
-  Settings,
   Share2
 } from "lucide-react";
 
@@ -276,18 +273,12 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
                     Analytics
                   </Button>
                   <Button
-                    onClick={() => copyShareLink(exam.share_link)}
+                    onClick={() => copyShareLink(exam.share_link!)}
                     variant="outline"
                     size="sm"
+                    disabled={!exam.share_link}
                   >
                     <Share2 className="w-4 h-4" />
-                  </Button>
-                  <Button
-                    onClick={() => navigate(`/edit-exam/${exam.id}`)}
-                    variant="outline"
-                    size="sm"
-                  >
-                    <Settings className="w-4 h-4" />
                   </Button>
                 </div>
               </Card>

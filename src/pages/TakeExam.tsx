@@ -42,7 +42,7 @@ const TakeExam = () => {
   const { shareLink } = useParams<{ shareLink: string }>();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -55,12 +55,15 @@ const TakeExam = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
+    // Wait for auth to finish loading
+    if (authLoading) return;
+    
     if (!user) {
       navigate('/auth');
       return;
     }
     loadExam();
-  }, [shareLink, user]);
+  }, [shareLink, user, authLoading]);
 
   useEffect(() => {
     if (timeRemaining === null || timeRemaining <= 0) return;
