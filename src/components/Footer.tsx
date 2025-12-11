@@ -12,7 +12,7 @@ const Footer = () => {
               <span className="text-xl font-bold">Do Stuff</span>
             </div>
             <p className="text-background/70 mb-6 max-w-md leading-relaxed">
-              The ultimate Duolingo-style exam platform for teachers and students. 
+              The ultimate  exam platform for teachers and students. 
               Create engaging assessments and track progress with ease.
             </p>
             <div className="flex gap-4">
