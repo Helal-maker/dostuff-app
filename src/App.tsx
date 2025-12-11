@@ -11,6 +11,7 @@ import TakeExam from "./pages/TakeExam";
 import JoinExam from "./pages/JoinExam";
 import TeacherOnboarding from "./pages/TeacherOnboarding";
 import Profile from "./pages/Profile";
+import ExamAnalytics from "./pages/ExamAnalytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -30,6 +31,7 @@ const App = () => (
           <Route path="/create-exam" element={<CreateExam />} />
           <Route path="/exam/:shareLink" element={<TakeExam />} />
           <Route path="/join" element={<JoinExam />} />
+          <Route path="/exam-analytics/:examId" element={<ExamAnalytics />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
