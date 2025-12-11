@@ -1,16 +1,20 @@
 import { Button } from "@/components/ui/button";
-import { BookOpen, Menu, X } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import logo from "@/assets/logo-dostuff.png";
+
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  return <nav className="fixed top-0 w-full bg-background/80 backdrop-blur-md border-b border-border z-50 shadow-soft">
+  const navigate = useNavigate();
+
+  return (
+    <nav className="fixed top-0 w-full bg-background/80 backdrop-blur-md border-b border-border z-50 shadow-soft">
       <div className="container mx-auto px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
-              <BookOpen className="w-5 h-5 text-primary-foreground" />
-            </div>
+            <img src={logo} alt="Do Stuff" className="w-8 h-8 rounded-lg object-cover" />
             <span className="text-xl font-bold text-foreground">Do Stuff</span>
           </div>
 
@@ -19,10 +23,10 @@ const Navbar = () => {
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
-            <Button variant="ghost">
+            <Button variant="ghost" onClick={() => navigate('/auth')}>
               Sign In
             </Button>
-            <Button variant="hero">
+            <Button variant="hero" onClick={() => navigate('/auth')}>
               Get Started
             </Button>
           </div>
@@ -46,16 +50,17 @@ const Navbar = () => {
                 Pricing
               </a>
               <div className="pt-4 space-y-3">
-                <Button variant="ghost" className="w-full">
+                <Button variant="ghost" className="w-full" onClick={() => { setIsMenuOpen(false); navigate('/auth'); }}>
                   Sign In
                 </Button>
-                <Button variant="hero" className="w-full">
+                <Button variant="hero" className="w-full" onClick={() => { setIsMenuOpen(false); navigate('/auth'); }}>
                   Get Started
                 </Button>
               </div>
             </div>
           </div>}
       </div>
-    </nav>;
+    </nav>
+  );
 };
 export default Navbar;
