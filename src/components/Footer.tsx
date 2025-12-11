@@ -41,10 +41,10 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Support</h3>
             <ul className="space-y-2 text-background/70">
-              <li><a href="#" className="hover:text-background transition-colors">Help Center</a></li>
-              <li><a href="#" className="hover:text-background transition-colors">Contact Us</a></li>
-              <li><a href="#" className="hover:text-background transition-colors">Privacy Policy</a></li>
-              <li><a href="#" className="hover:text-background transition-colors">Terms of Service</a></li>
+              <li><a href="https://oryno-co.pages.dev/legal/refund" className="hover:text-background transition-colors">Refund policy</a></li>
+              <li><a href="https://oryno-co.pages.dev/contact" className="hover:text-background transition-colors">Contact Us</a></li>
+              <li><a href="https://oryno-co.pages.dev/legal/privacy" className="hover:text-background transition-colors">Privacy Policy</a></li>
+              <li><a href="https://oryno-co.pages.dev/legal/terms" className="hover:text-background transition-colors">Terms of Service</a></li>
             </ul>
           </div>
         </div>
