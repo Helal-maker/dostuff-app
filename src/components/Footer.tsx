@@ -50,9 +50,7 @@ const Footer = () => {
         </div>
 
         <div className="border-t border-background/20 mt-8 pt-8 text-center">
-          <p className="text-background/70">
-            © 2024 Do Stuff. All rights reserved. Made with ❤️ for educators and learners.
-          </p>
+          <p className="text-background/70">© 2025 Do Stuff. All rights reserved. Made with ❤️ for educators and learners.</p>
         </div>
       </div>
     </footer>;
