@@ -9,16 +9,18 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { signOut } from "@/lib/auth";
-import { 
-  ArrowLeft, 
-  Camera, 
-  Loader2, 
-  GraduationCap, 
-  Users, 
+import {
+  ArrowLeft,
+  Camera,
+  Loader2,
+  GraduationCap,
+  Users,
   BookOpen,
   Award,
   Calendar,
-  Briefcase
+  Briefcase,
+  User,
+  LogOut
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -369,8 +371,16 @@ const Profile = () => {
           </Card>
         </div>
 
-        <div className="mt-6 text-center">
+        <div className="mt-6 flex justify-center gap-3">
+          <Button
+            variant="outline"
+            onClick={() => window.open('https://t.me/+P-Vu76yybMA5MjBk', '_blank')}
+          >
+            <Users className="w-4 h-4 mr-2" />
+            Join Community
+          </Button>
           <Button variant="outline" onClick={handleSignOut}>
+            <LogOut className="w-4 h-4 mr-2" />
             Sign Out
           </Button>
         </div>

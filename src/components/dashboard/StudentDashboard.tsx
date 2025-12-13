@@ -7,16 +7,17 @@ import { AuthUser, signOut } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  BookOpen, 
-  Trophy, 
-  Clock, 
-  LogOut, 
+import {
+  BookOpen,
+  Trophy,
+  Clock,
+  LogOut,
   Search,
   Calendar,
   Target,
   TrendingUp,
-  User
+  User,
+  Users
 } from "lucide-react";
 
 interface StudentDashboardProps {
@@ -148,6 +149,14 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
           >
             <User className="w-5 h-5 mr-2" />
             Profile
+          </Button>
+          <Button
+            onClick={() => window.open('https://t.me/+P-Vu76yybMA5MjBk', '_blank')}
+            variant="outline"
+            size="lg"
+          >
+            <Users className="w-5 h-5 mr-2" />
+            Join Community
           </Button>
           <Button
             onClick={handleSignOut}

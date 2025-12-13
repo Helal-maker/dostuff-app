@@ -5,13 +5,14 @@ import { AuthUser, signOut } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-import { 
-  Plus, 
-  Book, 
-  Users, 
-  BarChart3, 
-  LogOut, 
-  Share2
+import {
+  Plus,
+  Book,
+  Users,
+  BarChart3,
+  LogOut,
+  Share2,
+  User
 } from "lucide-react";
 
 interface TeacherDashboardProps {
@@ -117,8 +118,16 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
             variant="outline"
             size="lg"
           >
-            <Users className="w-5 h-5 mr-2" />
+            <User className="w-5 h-5 mr-2" />
             Profile
+          </Button>
+          <Button
+            onClick={() => window.open('https://t.me/+P-Vu76yybMA5MjBk', '_blank')}
+            variant="outline"
+            size="lg"
+          >
+            <Users className="w-5 h-5 mr-2" />
+            Join Community
           </Button>
           <Button
             onClick={() => navigate('/create-exam')}
