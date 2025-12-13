@@ -7,6 +7,22 @@
     <meta name="description" content="Create engaging, interactive exams with multiple question types. From multiple choice to translations - make learning fun and assessment effective." />
     <meta name="author" content="Do Stuff" />
     <meta name="keywords" content="exam platform, education, quiz, assessment, duolingo, learning, teaching, interactive exams" />
+    
+    <!-- Content Security Policy to prevent unauthorized image access -->
+    <meta http-equiv="Content-Security-Policy" content="
+      default-src 'self';
+      img-src 'self' data: https: blob:;
+      media-src 'self' https:;
+      script-src 'self' 'unsafe-inline' 'unsafe-eval';
+      style-src 'self' 'unsafe-inline';
+      connect-src 'self' https: wss:;
+      font-src 'self' data:;
+      object-src 'none';
+      base-uri 'self';
+      form-action 'self';
+      frame-ancestors 'none';
+      upgrade-insecure-requests;
+    " />
 
     <meta property="og:title" content="Do Stuff - Exam Platform" />
     <meta property="og:description" content="Create engaging, interactive exams with multiple question types. From multiple choice to translations - make learning fun and assessment effective." />

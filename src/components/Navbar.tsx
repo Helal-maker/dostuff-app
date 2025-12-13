@@ -13,13 +13,20 @@ const Navbar = () => {
       <div className="container mx-auto px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
             <img src={logo} alt="Do Stuff" className="w-8 h-8 rounded-lg object-cover" />
             <span className="text-xl font-bold text-foreground">Do Stuff</span>
           </div>
 
           {/* Desktop Menu */}
-          
+          <div className="hidden md:flex items-center gap-8">
+            <button 
+              onClick={() => navigate('/how-it-works')}
+              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
+            >
+              How it Works
+            </button>
+          </div>
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
@@ -40,15 +47,12 @@ const Navbar = () => {
         {/* Mobile Menu */}
         {isMenuOpen && <div className="md:hidden border-t border-border">
             <div className="py-6 space-y-4">
-              <a href="#features" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMenuOpen(false)}>
-                Features
-              </a>
-              <a href="#how-it-works" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMenuOpen(false)}>
+              <button 
+                onClick={() => { setIsMenuOpen(false); navigate('/how-it-works'); }}
+                className="block text-muted-foreground hover:text-foreground transition-colors"
+              >
                 How it Works
-              </a>
-              <a href="#pricing" className="block text-muted-foreground hover:text-foreground transition-colors" onClick={() => setIsMenuOpen(false)}>
-                Pricing
-              </a>
+              </button>
               <div className="pt-4 space-y-3">
                 <Button variant="ghost" className="w-full" onClick={() => { setIsMenuOpen(false); navigate('/auth'); }}>
                   Sign In
@@ -63,4 +67,5 @@ const Navbar = () => {
     </nav>
   );
 };
+
 export default Navbar;

@@ -1,7 +1,10 @@
 import { Mail, Coffee } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import logo from "@/assets/logo-dostuff.png";
 
 const Footer = () => {
+  const navigate = useNavigate();
+
   return (
     <footer className="bg-foreground text-background py-12">
       <div className="container mx-auto px-6 lg:px-8">
@@ -36,25 +39,27 @@ const Footer = () => {
           <div>
             <h3 className="font-semibold mb-4">Support</h3>
             <ul className="space-y-2 text-background/70">
-              <li>
-                <a href="https://oryno-co.pages.dev/legal/refund" className="hover:text-background transition-colors">
-                  Refund policy
-                </a>
-              </li>
+              
               <li>
                 <a href="https://oryno-co.pages.dev/contact" className="hover:text-background transition-colors">
                   Contact Us
                 </a>
               </li>
               <li>
-                <a href="https://oryno-co.pages.dev/legal/privacy" className="hover:text-background transition-colors">
+                <button
+                  onClick={() => navigate('/privacy-policy')}
+                  className="hover:text-background transition-colors text-left"
+                >
                   Privacy Policy
-                </a>
+                </button>
               </li>
               <li>
-                <a href="https://oryno-co.pages.dev/legal/terms" className="hover:text-background transition-colors">
+                <button
+                  onClick={() => navigate('/terms-of-service')}
+                  className="hover:text-background transition-colors text-left"
+                >
                   Terms of Service
-                </a>
+                </button>
               </li>
             </ul>
           </div>

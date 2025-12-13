@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import SecureAvatar from "@/components/ui/secure-avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -238,12 +238,13 @@ const Profile = () => {
           <Card className="md:col-span-1">
             <CardContent className="pt-6 text-center">
               <div className="relative inline-block mb-4">
-                <Avatar className="w-24 h-24">
-                  <AvatarImage src={avatarUrl || undefined} />
-                  <AvatarFallback className="text-2xl bg-primary text-primary-foreground">
-                    {getInitials(fullName || user?.email || 'U')}
-                  </AvatarFallback>
-                </Avatar>
+                <SecureAvatar
+                  src={avatarUrl}
+                  alt="Profile Avatar"
+                  fallback={getInitials(fullName || user?.email || 'U')}
+                  size="xl"
+                  className="border-2 border-background shadow-lg"
+                />
                 <label className="absolute bottom-0 right-0 p-2 bg-primary rounded-full cursor-pointer hover:bg-primary/90 transition-colors">
                   {isUploading ? (
                     <Loader2 className="w-4 h-4 text-primary-foreground animate-spin" />

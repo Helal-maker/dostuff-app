@@ -10,9 +10,21 @@ const Avatar = React.forwardRef<
   <AvatarPrimitive.Root
     ref={ref}
     className={cn(
-      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full",
+      "relative flex h-10 w-10 shrink-0 overflow-hidden rounded-full select-none pointer-events-none",
       className
     )}
+    draggable={false}
+    onDragStart={(e) => e.preventDefault()}
+    onDragOver={(e) => e.preventDefault()}
+    onDrop={(e) => e.preventDefault()}
+    onContextMenu={(e) => e.preventDefault()}
+    style={{
+      userSelect: 'none',
+      pointerEvents: 'none',
+      WebkitUserSelect: 'none',
+      MozUserSelect: 'none',
+      msUserSelect: 'none',
+    }}
     {...props}
   />
 ))
@@ -24,7 +36,24 @@ const AvatarImage = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <AvatarPrimitive.Image
     ref={ref}
-    className={cn("aspect-square h-full w-full", className)}
+    className={cn(
+      "aspect-square h-full w-full select-none pointer-events-none",
+      className
+    )}
+    draggable={false}
+    crossOrigin="anonymous"
+    onDragStart={(e) => e.preventDefault()}
+    onDragOver={(e) => e.preventDefault()}
+    onDrop={(e) => e.preventDefault()}
+    onContextMenu={(e) => e.preventDefault()}
+    style={{
+      userSelect: 'none',
+      pointerEvents: 'none',
+      WebkitUserSelect: 'none',
+      MozUserSelect: 'none',
+      msUserSelect: 'none',
+      filter: 'none',
+    }}
     {...props}
   />
 ))
@@ -37,9 +66,21 @@ const AvatarFallback = React.forwardRef<
   <AvatarPrimitive.Fallback
     ref={ref}
     className={cn(
-      "flex h-full w-full items-center justify-center rounded-full bg-muted",
+      "flex h-full w-full items-center justify-center rounded-full bg-muted select-none pointer-events-none",
       className
     )}
+    draggable={false}
+    onDragStart={(e) => e.preventDefault()}
+    onDragOver={(e) => e.preventDefault()}
+    onDrop={(e) => e.preventDefault()}
+    onContextMenu={(e) => e.preventDefault()}
+    style={{
+      userSelect: 'none',
+      pointerEvents: 'none',
+      WebkitUserSelect: 'none',
+      MozUserSelect: 'none',
+      msUserSelect: 'none',
+    }}
     {...props}
   />
 ))

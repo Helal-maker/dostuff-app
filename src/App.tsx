@@ -13,6 +13,9 @@ import TeacherOnboarding from "./pages/TeacherOnboarding";
 import Profile from "./pages/Profile";
 import ExamAnalytics from "./pages/ExamAnalytics";
 import ExamResults from "./pages/ExamResults";
+import HowItWorksPage from "./pages/HowItWorksPage";
+import PrivacyPolicy from "./pages/PrivacyPolicy";
+import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +28,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Index />} />
+          <Route path="/how-it-works" element={<HowItWorksPage />} />
           <Route path="/auth" element={<Auth />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/profile" element={<Profile />} />
@@ -34,8 +38,10 @@ const App = () => (
           <Route path="/join" element={<JoinExam />} />
           <Route path="/exam-analytics/:examId" element={<ExamAnalytics />} />
           <Route path="/exam-results/:attemptId" element={<ExamResults />} />
-          {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-          <Route path="*" element={<NotFound />} />
+                    <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                    <Route path="/terms-of-service" element={<TermsOfService />} />
+                    {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                    <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>
     </TooltipProvider>

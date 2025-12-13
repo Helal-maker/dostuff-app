@@ -15,8 +15,17 @@ const GetStartedSection = () => {
               Path
             </span>
           </h2>
-          <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
+          <p className="text-xl text-muted-foreground max-w-2xl mx-auto mb-4">
             Whether you're creating exams or taking them, we've got you covered with specialized workflows.
+          </p>
+          <p className="text-sm text-muted-foreground">
+            New here?{" "}
+            <button 
+              onClick={() => navigate('/how-it-works')}
+              className="text-primary hover:underline font-medium"
+            >
+              Learn how Do Stuff works →
+            </button>
           </p>
         </div>
 
@@ -91,4 +100,5 @@ const GetStartedSection = () => {
     </section>
   );
 };
+
 export default GetStartedSection;
