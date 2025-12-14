@@ -2,11 +2,19 @@ import { Button } from "@/components/ui/button";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { MobileNavbar } from "./mobile/MobileNavigation";
 import logo from "@/assets/logo-dostuff.png";
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
+
+  // Use mobile navbar on mobile devices
+  if (isMobile) {
+    return <MobileNavbar />;
+  }
 
   return (
     <nav className="fixed top-0 w-full bg-background/80 backdrop-blur-md border-b border-border z-50 shadow-soft">

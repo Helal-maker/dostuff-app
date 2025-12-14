@@ -1,14 +1,18 @@
 import { useAuth } from "@/hooks/useAuth";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import TeacherDashboard from "@/components/dashboard/TeacherDashboard";
 import StudentDashboard from "@/components/dashboard/StudentDashboard";
+import MobileTeacherDashboard from "@/components/mobile/MobileTeacherDashboard";
+import MobileStudentDashboard from "@/components/mobile/MobileStudentDashboard";
 import { Card } from "@/components/ui/card";
 import { Loader2 } from "lucide-react";
 
 const Dashboard = () => {
   const { user, loading, isAuthenticated, isTeacher, needsOnboarding } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     if (!loading && !isAuthenticated) {
@@ -39,9 +43,26 @@ const Dashboard = () => {
     return null;
   }
 
+  // Render mobile or desktop dashboard based on device type
+  const renderDashboard = () => {
+    if (isMobile) {
+      return isTeacher ? (
+        <MobileTeacherDashboard user={user} />
+      ) : (
+        <MobileStudentDashboard user={user} />
+      );
+    }
+    
+    return isTeacher ? (
+      <TeacherDashboard user={user} />
+    ) : (
+      <StudentDashboard user={user} />
+    );
+  };
+
   return (
     <div className="min-h-screen bg-background">
-      {isTeacher ? <TeacherDashboard user={user} /> : <StudentDashboard user={user} />}
+      {renderDashboard()}
     </div>
   );
 };
