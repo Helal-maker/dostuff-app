@@ -30,7 +30,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ userRole = 'st
       return [
         { icon: Home, label: 'Home', path: '/dashboard', key: 'home' },
         { icon: Plus, label: 'Create', path: '/create-exam', key: 'create' },
-        { icon: BookOpen, label: 'Exams', path: '/dashboard?view=exams', key: 'exams' },
+        { icon: BookOpen, label: 'Exams', path: '/exams', key: 'exams' },
         { icon: User, label: 'Profile', path: '/profile', key: 'profile' },
       ];
     }
@@ -38,7 +38,7 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ userRole = 'st
     return [
       { icon: Home, label: 'Home', path: '/dashboard', key: 'home' },
       { icon: BookOpen, label: 'Join', path: '/join', key: 'join' },
-      { icon: BarChart3, label: 'Results', path: '/dashboard?view=results', key: 'results' },
+      { icon: BarChart3, label: 'Results', path: '/results', key: 'results' },
       { icon: User, label: 'Profile', path: '/profile', key: 'profile' },
     ];
   };
@@ -51,17 +51,19 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ userRole = 'st
       return location.pathname === '/dashboard';
     }
     if (item.key === 'exams') {
-      return location.pathname === '/dashboard' && location.search === '?view=exams';
+      return location.pathname === '/exams' ||
+             (location.pathname === '/dashboard' && location.search === '?view=exams');
     }
     if (item.key === 'results') {
-      return location.pathname === '/dashboard' && location.search === '?view=results';
+      return location.pathname === '/results' ||
+             (location.pathname === '/dashboard' && location.search === '?view=results');
     }
     return location.pathname === item.path;
   };
 
   return (
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-md border-t border-border">
-      <div className="flex items-center justify-around h-16 px-2">
+      <div className={`flex items-center justify-around h-16 px-1 ${navItems.length > 4 ? 'overflow-x-auto' : ''}`}>
         {navItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item);
@@ -70,14 +72,14 @@ export const MobileBottomNav: React.FC<MobileBottomNavProps> = ({ userRole = 'st
             <button
               key={item.key}
               onClick={() => navigate(item.path)}
-              className={`flex flex-col items-center justify-center p-2 rounded-lg transition-all duration-200 min-w-[44px] ${
-                active 
-                  ? 'text-primary bg-primary/10 scale-105' 
+              className={`flex flex-col items-center justify-center p-1.5 rounded-lg transition-all duration-200 min-w-[44px] ${
+                active
+                  ? 'text-primary bg-primary/10 scale-105'
                   : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
               }`}
             >
-              <Icon className={`w-5 h-5 mb-1 ${active ? 'text-primary' : ''}`} />
-              <span className={`text-xs font-medium ${active ? 'text-primary' : ''}`}>
+              <Icon className={`w-4 h-4 mb-0.5 ${active ? 'text-primary' : ''}`} />
+              <span className={`text-xs font-medium truncate max-w-[60px] ${active ? 'text-primary' : ''}`}>
                 {item.label}
               </span>
             </button>

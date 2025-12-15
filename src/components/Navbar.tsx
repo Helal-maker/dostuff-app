@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X } from "lucide-react";
-import { useState } from "react";
+import { Menu, X, BarChart3, BookOpen } from "lucide-react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/useAuth";
 import { MobileNavbar } from "./mobile/MobileNavigation";
 import logo from "@/assets/logo-dostuff.png";
 
@@ -10,6 +11,7 @@ const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { user, isAuthenticated, isTeacher, loading } = useAuth();
 
   // Use mobile navbar on mobile devices
   if (isMobile) {
@@ -28,12 +30,36 @@ const Navbar = () => {
 
           {/* Desktop Menu */}
           <div className="hidden md:flex items-center gap-8">
-            <button 
+            <button
               onClick={() => navigate('/how-it-works')}
               className="text-muted-foreground hover:text-foreground transition-colors font-medium"
             >
               How it Works
             </button>
+            {isAuthenticated && !loading && (
+              <>
+                {!isTeacher && (
+                  <button
+                    onClick={() => navigate('/results')}
+                    className="text-muted-foreground hover:text-foreground transition-colors font-medium flex items-center gap-2"
+                    aria-label="View exam results"
+                  >
+                    <BarChart3 className="w-4 h-4" />
+                    Results
+                  </button>
+                )}
+                {isTeacher && (
+                  <button
+                    onClick={() => navigate('/exams')}
+                    className="text-muted-foreground hover:text-foreground transition-colors font-medium flex items-center gap-2"
+                    aria-label="View exams for teachers"
+                  >
+                    <BookOpen className="w-4 h-4" />
+                    Exams
+                  </button>
+                )}
+              </>
+            )}
           </div>
 
           {/* Desktop CTA */}
@@ -55,12 +81,32 @@ const Navbar = () => {
         {/* Mobile Menu */}
         {isMenuOpen && <div className="md:hidden border-t border-border">
             <div className="py-6 space-y-4">
-              <button 
+              <button
                 onClick={() => { setIsMenuOpen(false); navigate('/how-it-works'); }}
                 className="block text-muted-foreground hover:text-foreground transition-colors"
               >
                 How it Works
               </button>
+              {isAuthenticated && !loading && (
+                <>
+                  {!isTeacher && (
+                    <button
+                      onClick={() => { setIsMenuOpen(false); navigate('/results'); }}
+                      className="block text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Results
+                    </button>
+                  )}
+                  {isTeacher && (
+                    <button
+                      onClick={() => { setIsMenuOpen(false); navigate('/exams'); }}
+                      className="block text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                      Exams
+                    </button>
+                  )}
+                </>
+              )}
               <div className="pt-4 space-y-3">
                 <Button variant="ghost" className="w-full" onClick={() => { setIsMenuOpen(false); navigate('/auth'); }}>
                   Sign In

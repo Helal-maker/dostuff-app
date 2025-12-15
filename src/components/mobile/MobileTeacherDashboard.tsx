@@ -13,14 +13,12 @@ import {
   Plus,
   Book,
   Users,
-  BarChart3,
   LogOut,
   Share2,
   User,
   Settings,
   Calendar,
   Target,
-  Eye,
   Edit,
   MoreVertical
 } from "lucide-react";
@@ -167,38 +165,7 @@ export const MobileTeacherDashboard: React.FC<MobileTeacherDashboardProps> = ({ 
           />
         </div>
 
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-4">
-          <MobileButton
-            onClick={() => navigate('/create-exam')}
-            variant="hero"
-            size="full"
-            leftIcon={<Plus className="w-5 h-5" />}
-          >
-            Create Exam
-          </MobileButton>
-          
-          <MobileCard className="text-center">
-            <div className="w-12 h-12 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-3">
-              <BarChart3 className="w-6 h-6 text-success" />
-            </div>
-            <h3 className="font-semibold text-foreground mb-1">Analytics</h3>
-            <p className="text-sm text-muted-foreground mb-3">View insights</p>
-            <Button 
-              variant="outline" 
-              size="sm" 
-              className="w-full"
-              onClick={() => {
-                if (exams.length > 0) {
-                  navigate(`/exam-analytics/${exams[0].id}`);
-                }
-              }}
-              disabled={exams.length === 0}
-            >
-              View
-            </Button>
-          </MobileCard>
-        </div>
+        {/* Quick Actions Removed as per user request */}
 
         {/* Recent Exams */}
         <div className="space-y-4">
@@ -273,44 +240,7 @@ export const MobileTeacherDashboard: React.FC<MobileTeacherDashboardProps> = ({ 
           )}
         </div>
 
-        {/* Performance Overview */}
-        {exams.length > 0 && (
-          <div className="space-y-4">
-            <h2 className="text-xl font-bold text-foreground">Performance Overview</h2>
-            <div className="grid grid-cols-1 gap-4">
-              <MobileCard>
-                <div className="text-center">
-                  <div className="w-16 h-16 bg-gradient-primary rounded-full flex items-center justify-center mx-auto mb-4">
-                    <BarChart3 className="w-8 h-8 text-primary-foreground" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-foreground mb-2">Track Progress</h3>
-                  <p className="text-muted-foreground mb-4">
-                    Monitor student performance and engagement
-                  </p>
-                  <MobileButton
-                    onClick={() => {
-                      const publishedExam = exams.find(exam => exam.is_published && exam._count?.attempts > 0);
-                      if (publishedExam) {
-                        navigate(`/exam-analytics/${publishedExam.id}`);
-                      } else {
-                        toast({
-                          title: "No Data",
-                          description: "Create and publish an exam to see analytics",
-                          variant: "destructive",
-                        });
-                      }
-                    }}
-                    variant="outline"
-                    size="full"
-                    leftIcon={<Eye className="w-5 h-5" />}
-                  >
-                    View Analytics
-                  </MobileButton>
-                </div>
-              </MobileCard>
-            </div>
-          </div>
-        )}
+        {/* Performance Overview section removed as per user request */}
       </div>
       
       <MobileBottomNav userRole="teacher" />

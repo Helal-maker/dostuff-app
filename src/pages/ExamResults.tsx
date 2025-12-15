@@ -5,15 +5,6 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { 
-  Trophy, 
-  XCircle, 
-  Clock, 
-  Target, 
-  ArrowRight,
-  CheckCircle,
-  Loader2
-} from "lucide-react";
 
 interface ExamResult {
   id: string;
@@ -24,6 +15,7 @@ interface ExamResult {
   end_time: string | null;
   answers?: any;
   exam: {
+    id: string;
     title: string;
     description: string | null;
     pass_threshold: number;
@@ -62,6 +54,7 @@ const ExamResults = () => {
           start_time,
           end_time,
           exam:exams (
+            id,
             title,
             description,
             pass_threshold
@@ -81,14 +74,16 @@ const ExamResults = () => {
       setResult(data as unknown as ExamResult);
       // fetch questions for review
       try {
-        const { data: qData, error: qError } = await supabase
-          .from('questions')
-          .select('*')
-          .eq('exam_id', data.exam.id)
-          .order('order_index');
+        if (data.exam && typeof data.exam === 'object' && 'id' in data.exam) {
+          const { data: qData, error: qError } = await supabase
+            .from('questions')
+            .select('*')
+            .eq('exam_id', (data.exam as any).id)
+            .order('order_index');
 
-        if (qError) throw qError;
-        setQuestions((qData || []) as any[]);
+          if (qError) throw qError;
+          setQuestions((qData || []) as any[]);
+        }
       } catch (err) {
         console.error('Error loading questions for review:', err);
       }
@@ -101,7 +96,7 @@ const ExamResults = () => {
   };
 
   const getTimeTaken = () => {
-    if (!result?.start_time || !result?.end_time) return "N/A";
+    if (!result?.start_time || !result?.end_time) return "0m 0s";
     const diff = new Date(result.end_time).getTime() - new Date(result.start_time).getTime();
     const minutes = Math.floor(diff / 60000);
     const seconds = Math.floor((diff % 60000) / 1000);
@@ -144,11 +139,12 @@ const ExamResults = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
-        <Card className="p-8 bg-gradient-card border-0 shadow-medium">
-          <div className="flex items-center justify-center space-x-3">
-            <Loader2 className="h-6 w-6 animate-spin text-primary" />
-            <p className="text-muted-foreground">Loading results...</p>
+      <div className="bg-gradient-to-br from-violet-600 via-cyan-400 to-amber-300 min-h-screen flex items-center justify-center p-4">
+        <Card className="p-8 bg-white/10 backdrop-blur-md border-white/20 rounded-3xl shadow-2xl text-center">
+          <div className="animate-pulse">
+            <div className="w-16 h-16 bg-white/20 rounded-full mx-auto mb-4"></div>
+            <div className="h-4 bg-white/20 rounded w-48 mx-auto mb-2"></div>
+            <div className="h-3 bg-white/20 rounded w-32 mx-auto"></div>
           </div>
         </Card>
       </div>
@@ -163,120 +159,150 @@ const ExamResults = () => {
   const passed = result.passed;
 
   return (
-    <div className="min-h-screen bg-gradient-hero flex items-center justify-center p-6">
-      <Card className="w-full max-w-lg p-8 bg-gradient-card border-0 shadow-medium text-center">
-        {/* Result Icon */}
-        <div className={`w-24 h-24 mx-auto mb-6 rounded-full flex items-center justify-center ${
-          passed ? 'bg-success/20' : 'bg-destructive/20'
-        }`}>
-          {passed ? (
-            <Trophy className="w-12 h-12 text-success" />
-          ) : (
-            <XCircle className="w-12 h-12 text-destructive" />
-          )}
-        </div>
-
-        {/* Title */}
-        <h1 className={`text-3xl font-bold mb-2 ${
-          passed ? 'text-success' : 'text-destructive'
-        }`}>
-          {passed ? 'Congratulations!' : 'Better Luck Next Time'}
-        </h1>
+    <div className="bg-gradient-to-br from-violet-600 via-cyan-400 to-amber-300 min-h-screen font-display flex items-center justify-center p-4 text-slate-800 antialiased">
+      <main className="w-full max-w-[400px] bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden relative animate-pop-in flex flex-col">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 via-violet-500 to-green-500 opacity-50"></div>
         
-        <p className="text-muted-foreground mb-6">
-          {passed 
-            ? 'You have successfully passed the exam!' 
-            : 'You did not reach the passing score.'}
-        </p>
-
-        {/* Exam Title */}
-        <p className="text-lg font-medium text-foreground mb-8">
-          {result.exam.title}
-        </p>
-
-        {/* Score Display */}
-        <div className="mb-8">
-          <div className="text-5xl font-bold text-foreground mb-2">
-            {score.toFixed(1)}%
+        <div className="p-8 pb-4 flex flex-col items-center text-center space-y-6 flex-grow">
+          {/* Trophy Animation */}
+          <div className="relative group">
+            <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-2 animate-float">
+              <span className="material-icons-round text-5xl text-green-500 drop-shadow-sm">emoji_events</span>
+            </div>
+            <span className="material-icons-round text-yellow-400 absolute -top-2 -right-2 text-xl animate-pulse" style={{animationDelay: '0.2s'}}>auto_awesome</span>
+            <span className="material-icons-round text-yellow-400 absolute bottom-0 -left-2 text-sm animate-pulse" style={{animationDelay: '0.5s'}}>star</span>
           </div>
-          <Progress 
-            value={score} 
-            className={`h-3 ${passed ? '[&>div]:bg-success' : '[&>div]:bg-destructive'}`} 
-          />
-          <p className="text-sm text-muted-foreground mt-2">
-            Passing score: {result.exam.pass_threshold}%
-          </p>
-        </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-2 gap-4 mb-8">
-          <Card className="p-4 bg-muted/50 border-0">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Time Taken</span>
-            </div>
-            <p className="text-lg font-semibold text-foreground">{getTimeTaken()}</p>
-          </Card>
-          
-          <Card className="p-4 bg-muted/50 border-0">
-            <div className="flex items-center justify-center gap-2 mb-1">
-              <Target className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Status</span>
-            </div>
-            <p className={`text-lg font-semibold ${passed ? 'text-success' : 'text-destructive'}`}>
-              {passed ? 'Passed' : 'Failed'}
+          {/* Title */}
+          <div className="space-y-2">
+            <h1 className={`text-3xl font-bold tracking-tight ${
+              passed ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'
+            }`}>
+              {passed ? 'Congratulations!' : 'Exam Completed'}
+            </h1>
+            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed">
+              {passed 
+                ? 'You have successfully passed the exam!' 
+                : 'Keep practicing to improve your score!'}
             </p>
-          </Card>
-        </div>
+          </div>
 
-        {/* Action Button */}
-        <Button
-          onClick={() => navigate('/dashboard')}
-          variant="hero"
-          size="lg"
-          className="w-full"
-        >
-          Continue to Dashboard
-          <ArrowRight className="w-5 h-5 ml-2" />
-        </Button>
-        {/* Review Section */}
-        <div className="mt-8 text-left">
-          <h2 className="text-xl font-semibold mb-4">Review Questions</h2>
-          {questions.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No questions available for review.</p>
-          ) : (
-            <div className="space-y-4">
-              {questions.map((q) => {
-                const userAnswer = (result as any).answers?.[q.id];
-                const correct = isCorrect(q, userAnswer);
-                return (
-                  <Card key={q.id} className="p-4 bg-muted/30 border-0">
-                    <div className="flex items-start gap-4">
-                      <div className="mt-1">
-                        {correct ? (
-                          <CheckCircle className="w-6 h-6 text-success" />
-                        ) : (
-                          <XCircle className="w-6 h-6 text-destructive" />
-                        )}
-                      </div>
-                      <div className="flex-1">
-                        <p className="font-medium text-foreground mb-1">{q.question_text}</p>
-                        <div className="text-sm text-muted-foreground mb-2">
-                          <p><strong>Your answer:</strong> {typeof userAnswer === 'object' ? JSON.stringify(userAnswer) : (userAnswer ?? '—')}</p>
-                          <p><strong>Correct answer:</strong> {q.question_data?.correctAnswer ?? '—'}</p>
+          {/* Exam Badge */}
+          <div className="text-slate-800 dark:text-slate-200 font-semibold tracking-wide uppercase text-xs bg-slate-100 dark:bg-slate-700/50 px-3 py-1 rounded-full">
+            {result.exam.title}
+          </div>
+
+          {/* Score Display */}
+          <div className="w-full space-y-2">
+            <div className="text-6xl font-extrabold text-slate-900 dark:text-white tracking-tighter tabular-nums">
+              {score.toFixed(1)}<span className="text-3xl text-slate-400">%</span>
+            </div>
+            <div className="relative h-3 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mt-2">
+              <div 
+                className={`absolute top-0 left-0 h-full rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)] transition-all duration-1000 ${
+                  passed ? 'bg-gradient-to-r from-green-500 to-green-400' : 'bg-gradient-to-r from-red-500 to-red-400'
+                }`}
+                style={{ width: `${score}%` }}
+              ></div>
+            </div>
+            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium pt-1">
+              Passing score: {result.exam.pass_threshold}%
+            </p>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-2 gap-4 w-full pt-2">
+            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-2xl p-4 flex flex-col items-center justify-center space-y-1 transition hover:scale-[1.02] cursor-default">
+              <div className="flex items-center space-x-1 text-slate-400 dark:text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">
+                <span className="material-icons-round text-sm">schedule</span>
+                <span>Time</span>
+              </div>
+              <span className="text-slate-800 dark:text-white font-bold text-lg">{getTimeTaken()}</span>
+            </div>
+            
+            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-2xl p-4 flex flex-col items-center justify-center space-y-1 transition hover:scale-[1.02] cursor-default">
+              <div className="flex items-center space-x-1 text-slate-400 dark:text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">
+                <span className="material-icons-round text-sm">check_circle</span>
+                <span>Status</span>
+              </div>
+              <span className={`font-bold text-lg ${passed ? 'text-green-500' : 'text-red-500'}`}>
+                {passed ? 'Passed' : 'Failed'}
+              </span>
+            </div>
+          </div>
+
+          {/* Action Button */}
+          <Button 
+            onClick={() => navigate('/dashboard')}
+            className="w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold py-4 px-6 rounded-2xl shadow-lg shadow-violet-500/30 dark:shadow-violet-900/40 transform transition hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center group mt-2"
+          >
+            <span>Continue to Dashboard</span>
+            <span className="material-icons-round ml-2 text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
+          </Button>
+
+          {/* Divider */}
+          <div className="w-full h-px bg-slate-100 dark:bg-slate-700/50 my-2"></div>
+
+          {/* Review Section */}
+          <div className="w-full text-left pb-4">
+            <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-2 flex items-center">
+              <span className="material-icons-round mr-2 text-violet-600">quiz</span>
+              Review Questions
+            </h3>
+            {questions.length === 0 ? (
+              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-xl p-4 text-center">
+                <p className="text-slate-400 dark:text-slate-500 text-sm">
+                  No questions available for review.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3 max-h-60 overflow-y-auto">
+                {questions.slice(0, 5).map((q) => {
+                  const userAnswer = (result as any).answers?.[q.id];
+                  const correct = isCorrect(q, userAnswer);
+                  return (
+                    <div key={q.id} className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-xl p-3">
+                      <div className="flex items-start gap-3">
+                        <div className="mt-1">
+                          {correct ? (
+                            <span className="material-icons-round text-green-500 text-lg">check_circle</span>
+                          ) : (
+                            <span className="material-icons-round text-red-500 text-lg">cancel</span>
+                          )}
                         </div>
-                        <p className={`text-sm ${correct ? 'text-success' : 'text-destructive'}`}>
-                          {correct ? 'Correct — good job!' : 'Incorrect — review this topic and try similar questions to improve.'}
-                        </p>
+                        <div className="flex-1 min-w-0">
+                          <p className="font-medium text-slate-800 dark:text-slate-200 text-sm mb-1 truncate">
+                            {q.question_text}
+                          </p>
+                          <p className={`text-xs ${correct ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
+                            {correct ? 'Correct' : 'Incorrect'}
+                          </p>
+                        </div>
                       </div>
                     </div>
-                  </Card>
-                );
-              })}
-            </div>
-          )}
+                  );
+                })}
+                {questions.length > 5 && (
+                  <p className="text-xs text-slate-400 dark:text-slate-500 text-center pt-2">
+                    +{questions.length - 5} more questions
+                  </p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
-      </Card>
+      </main>
+
+      {/* Dark Mode Toggle */}
+      <div className="fixed bottom-4 right-4 z-50">
+        <Button 
+          onClick={() => document.documentElement.classList.toggle('dark')}
+          className="bg-white dark:bg-slate-800 p-3 rounded-full shadow-lg text-slate-800 dark:text-white hover:scale-110 transition-transform border-0"
+        >
+          <span className="material-icons-round dark:hidden">dark_mode</span>
+          <span className="hidden dark:block material-icons-round">light_mode</span>
+        </Button>
+      </div>
     </div>
   );
 };

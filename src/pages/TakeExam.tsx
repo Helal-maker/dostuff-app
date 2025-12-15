@@ -6,7 +6,6 @@ import { Progress } from "@/components/ui/progress";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { Clock, CheckCircle, AlertCircle } from "lucide-react";
 import ExamQuestionRenderer from "@/components/exam/ExamQuestionRenderer";
 
 interface Exam {
@@ -115,8 +114,8 @@ const TakeExam = () => {
 
       if (attemptsError) throw attemptsError;
 
-      // Check if user has reached attempt limit
-      if (attemptsData && attemptsData.length >= (examData.max_attempts || 1)) {
+      // Check if user has exceeded attempt limit
+      if (attemptsData && attemptsData.length > (examData.max_attempts || 1)) {
         const lastAttempt = attemptsData[0];
         if (lastAttempt.is_completed) {
           setError("You have reached the maximum number of attempts for this exam");
@@ -289,12 +288,12 @@ const TakeExam = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
-        <Card className="p-8 bg-gradient-card border-0 shadow-medium text-center">
+      <div className="min-h-screen bg-gradient-to-br from-violet-600 via-purple-600 to-pink-600 flex items-center justify-center p-4">
+        <Card className="p-8 bg-white/10 backdrop-blur-md border-white/20 rounded-3xl shadow-2xl text-center">
           <div className="animate-pulse">
-            <div className="w-16 h-16 bg-muted rounded-lg mx-auto mb-4"></div>
-            <div className="h-4 bg-muted rounded w-48 mx-auto mb-2"></div>
-            <div className="h-3 bg-muted rounded w-32 mx-auto"></div>
+            <div className="w-16 h-16 bg-white/20 rounded-lg mx-auto mb-4"></div>
+            <div className="h-4 bg-white/20 rounded w-48 mx-auto mb-2"></div>
+            <div className="h-3 bg-white/20 rounded w-32 mx-auto"></div>
           </div>
         </Card>
       </div>
@@ -303,12 +302,17 @@ const TakeExam = () => {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
-        <Card className="p-8 bg-gradient-card border-0 shadow-medium text-center max-w-md">
-          <AlertCircle className="w-16 h-16 text-destructive mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-foreground mb-2">Error</h2>
-          <p className="text-muted-foreground mb-6">{error}</p>
-          <Button onClick={() => navigate('/dashboard')} variant="hero">
+      <div className="min-h-screen bg-gradient-to-br from-violet-600 via-purple-600 to-pink-600 flex items-center justify-center p-4">
+        <Card className="p-8 bg-white/10 backdrop-blur-md border-white/20 rounded-3xl shadow-2xl text-center max-w-md">
+          <div className="w-16 h-16 text-red-400 mx-auto mb-4 flex items-center justify-center">
+            <span className="material-icons-round text-4xl">error</span>
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Error</h2>
+          <p className="text-white/80 mb-6">{error}</p>
+          <Button 
+            onClick={() => navigate('/dashboard')} 
+            className="bg-white/20 hover:bg-white/30 backdrop-blur-sm border border-white/10 text-white font-semibold py-3 px-6 rounded-2xl transition-all active:scale-95"
+          >
             Go to Dashboard
           </Button>
         </Card>
@@ -324,96 +328,108 @@ const TakeExam = () => {
   const currentQuestion = questions[currentQuestionIndex];
 
   return (
-    <div className="min-h-screen bg-gradient-hero">
-      <div className="container mx-auto px-6 py-8">
+    <div className="bg-gradient-to-br from-violet-600 via-purple-600 to-pink-600 min-h-screen text-white">
+      <div className="max-w-md mx-auto flex flex-col min-h-screen">
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">{exam.title}</h1>
-            <p className="text-muted-foreground">
-              Question {currentQuestionIndex + 1} of {questions.length}
-            </p>
+        <header className="px-6 pt-8 pb-4">
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">{exam.title}</h1>
+              <p className="text-white/80 font-medium mt-1">
+                Question {currentQuestionIndex + 1} of {questions.length}
+              </p>
+            </div>
+            {timeRemaining !== null && (
+              <div className="bg-white/20 backdrop-blur-md rounded-full px-4 py-2 flex items-center gap-2 border border-white/10 shadow-sm">
+                <span className="material-icons-round text-yellow-300 text-sm">timer</span>
+                <span className="font-bold text-sm tracking-wide">
+                  {formatTime(timeRemaining)}
+                </span>
+              </div>
+            )}
           </div>
           
-          {timeRemaining !== null && (
-            <div className="flex items-center gap-2 bg-card/50 backdrop-blur px-4 py-2 rounded-lg">
-              <Clock className="w-5 h-5 text-warning" />
-              <span className={`font-mono font-semibold ${timeRemaining < 300 ? 'text-destructive' : 'text-foreground'}`}>
-                {formatTime(timeRemaining)}
-              </span>
+          <div className="mt-4">
+            <div className="flex justify-between text-xs font-medium text-white/90 mb-2 px-1">
+              <span>Progress: {Math.round(progress)}%</span>
+              <span>{questions.length - currentQuestionIndex - 1} questions remaining</span>
             </div>
-          )}
-        </div>
-
-        {/* Progress Bar */}
-        <div className="mb-8">
-          <Progress value={progress} className="h-2" />
-          <div className="flex justify-between mt-2 text-sm text-muted-foreground">
-            <span>Progress: {Math.round(progress)}%</span>
-            <span>{questions.length - currentQuestionIndex - 1} questions remaining</span>
+            <div className="h-2 w-full bg-black/20 rounded-full overflow-hidden backdrop-blur-sm">
+              <div 
+                className="h-full bg-emerald-400 rounded-full shadow-[0_0_10px_rgba(52,211,153,0.5)] transition-all duration-500"
+                style={{ width: `${progress}%` }}
+              ></div>
+            </div>
           </div>
-        </div>
+        </header>
 
-        {/* Question Card */}
-        <Card className="p-8 bg-gradient-card border-0 shadow-medium mb-8">
+        {/* Question */}
+        <main className="flex-1 px-4 pb-8 flex flex-col justify-center">
           <ExamQuestionRenderer
             question={currentQuestion}
             answer={answers[currentQuestion.id]}
             onAnswerChange={(answer) => updateAnswer(currentQuestion.id, answer)}
             language={exam.language}
           />
-        </Card>
+        </main>
 
-        {/* Navigation */}
-        <div className="flex justify-between">
-          <Button
-            onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
-            disabled={currentQuestionIndex === 0}
-            variant="outline"
-            size="lg"
-          >
-            Previous
-          </Button>
-
-          <div className="flex gap-3">
-            {currentQuestionIndex === questions.length - 1 ? (
-              <Button
-                onClick={submitExam}
-                disabled={isSubmitting}
-                variant="hero"
-                size="lg"
-              >
-                <CheckCircle className="w-5 h-5 mr-2" />
-                {isSubmitting ? "Submitting..." : "Submit Exam"}
-              </Button>
-            ) : (
-              <Button
-                onClick={() => setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
-                variant="hero"
-                size="lg"
-              >
-                Next
-              </Button>
-            )}
-          </div>
-        </div>
-
-        {/* Question Navigation Dots */}
-        <div className="flex justify-center mt-8 gap-2">
+        {/* Navigation Dots */}
+        <div className="flex justify-center gap-2 mb-6">
           {questions.map((_, index) => (
-            <button
+            <div
               key={index}
-              onClick={() => setCurrentQuestionIndex(index)}
-              className={`w-3 h-3 rounded-full transition-colors ${
+              className={`w-2.5 h-2.5 rounded-full transition-all ${
                 index === currentQuestionIndex
-                  ? 'bg-primary'
+                  ? 'bg-white shadow-lg scale-110'
                   : answers[questions[index].id] !== undefined
-                  ? 'bg-success'
-                  : 'bg-muted'
+                  ? 'bg-white/70'
+                  : 'bg-white/40'
               }`}
             />
           ))}
         </div>
+
+        {/* Navigation Buttons */}
+        <footer className="px-6 pb-8">
+          <div className="flex gap-4">
+            <Button
+              onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+              disabled={currentQuestionIndex === 0}
+              className="flex-1 py-4 px-6 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/10 text-white font-semibold flex items-center justify-center transition-all active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <span className="material-icons-round mr-2 group-hover:-translate-x-1 transition-transform text-lg">arrow_back</span>
+              Previous
+            </Button>
+
+            {currentQuestionIndex === questions.length - 1 ? (
+              <Button
+                onClick={submitExam}
+                disabled={isSubmitting}
+                className="flex-1 py-4 px-6 rounded-2xl bg-white text-purple-600 font-bold flex items-center justify-center shadow-lg transition-all active:scale-95 group hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isSubmitting ? (
+                  <>
+                    <span className="material-icons-round mr-2 animate-spin text-lg">hourglass_empty</span>
+                    Submitting...
+                  </>
+                ) : (
+                  <>
+                    Submit Exam
+                    <span className="material-icons-round ml-2 group-hover:translate-x-1 transition-transform text-lg">check_circle</span>
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button
+                onClick={() => setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
+                className="flex-1 py-4 px-6 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/20 text-white font-semibold flex items-center justify-center shadow-lg transition-all active:scale-95 group"
+              >
+                Next
+                <span className="material-icons-round ml-2 group-hover:translate-x-1 transition-transform text-lg">arrow_forward</span>
+              </Button>
+            )}
+          </div>
+        </footer>
       </div>
     </div>
   );

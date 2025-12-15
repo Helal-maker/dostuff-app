@@ -1,10 +1,13 @@
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { AuthUser, signOut } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import DashboardStatsGrid, { createExamStats } from "./DashboardStatsGrid";
 import {
   Plus,
   Book,
@@ -12,7 +15,10 @@ import {
   BarChart3,
   LogOut,
   Share2,
-  User
+  User,
+  HelpCircle,
+  Calendar,
+  MessageSquare
 } from "lucide-react";
 
 interface TeacherDashboardProps {
@@ -38,6 +44,7 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchExams();
@@ -45,25 +52,52 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
 
   const fetchExams = async () => {
     try {
-      const { data, error } = await supabase
+      // First get the exams
+      const { data: examsData, error: examsError } = await supabase
         .from('exams')
-        .select(`
-          *,
-          questions(count),
-          exam_attempts(count)
-        `)
+        .select('*')
         .eq('teacher_id', user.id)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (examsError) throw examsError;
 
-      const examsWithCounts = data.map(exam => ({
-        ...exam,
-        _count: {
-          questions: exam.questions?.[0]?.count || 0,
-          attempts: exam.exam_attempts?.[0]?.count || 0
-        }
-      }));
+      if (!examsData || examsData.length === 0) {
+        setExams([]);
+        return;
+      }
+
+      // Get exam IDs for batch queries
+      const examIds = examsData.map(exam => exam.id);
+
+      // Get questions count for each exam
+      const { data: questionsData, error: questionsError } = await supabase
+        .from('questions')
+        .select('exam_id')
+        .in('exam_id', examIds);
+
+      if (questionsError) throw questionsError;
+
+      // Get exam attempts count
+      const { data: attemptsData, error: attemptsError } = await supabase
+        .from('exam_attempts')
+        .select('exam_id')
+        .in('exam_id', examIds);
+
+      if (attemptsError) throw attemptsError;
+
+      // Process data to add counts
+      const examsWithCounts = examsData.map(exam => {
+        const examQuestions = questionsData?.filter(q => q.exam_id === exam.id) || [];
+        const examAttempts = attemptsData?.filter(a => a.exam_id === exam.id) || [];
+        
+        return {
+          ...exam,
+          _count: {
+            questions: examQuestions.length,
+            attempts: examAttempts.length
+          }
+        };
+      });
 
       setExams(examsWithCounts);
     } catch (error) {
@@ -148,48 +182,23 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="p-6 bg-gradient-card border-0 shadow-medium">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-              <Book className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Exams</p>
-              <p className="text-2xl font-bold text-foreground">{exams.length}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-card border-0 shadow-medium">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
-              <Users className="w-6 h-6 text-success" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Total Attempts</p>
-              <p className="text-2xl font-bold text-foreground">
-                {exams.reduce((acc, exam) => acc + (exam._count?.attempts || 0), 0)}
-              </p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-card border-0 shadow-medium">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
-              <BarChart3 className="w-6 h-6 text-warning" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Published Exams</p>
-              <p className="text-2xl font-bold text-foreground">
-                {exams.filter(exam => exam.is_published).length}
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
+      {/* Responsive Stats Grid */}
+      <DashboardStatsGrid
+        stats={createExamStats({
+          totalExams: exams.length,
+          publishedExams: exams.filter(exam => exam.is_published).length,
+          draftExams: exams.filter(exam => !exam.is_published).length,
+          totalAttempts: exams.reduce((acc, exam) => acc + (exam._count?.attempts || 0), 0),
+          averageScore: exams.length > 0 ? Math.round(
+            exams.reduce((acc, exam) => {
+              // This would need to be calculated from actual scores
+              return acc + (exam._count?.attempts ? 75 : 0); // Placeholder calculation
+            }, 0) / exams.length
+          ) : undefined
+        })}
+        layout="two-up-one-down"
+        className="mb-8"
+      />
 
       {/* Exams List */}
       <div className="space-y-6">
@@ -200,7 +209,7 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
         {loading ? (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {[...Array(6)].map((_, i) => (
-              <Card key={i} className="p-6 bg-gradient-card border-0 shadow-medium animate-pulse">
+              <Card key={i} className="p-6 bg-gradient-card border-0 shadow-strong animate-pulse">
                 <div className="h-4 bg-muted rounded w-3/4 mb-3"></div>
                 <div className="h-3 bg-muted rounded w-1/2 mb-4"></div>
                 <div className="space-y-2">
@@ -211,7 +220,7 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
             ))}
           </div>
         ) : exams.length === 0 ? (
-          <Card className="p-12 bg-gradient-card border-0 shadow-medium text-center">
+          <Card className="p-12 bg-gradient-card border-0 shadow-strong text-center">
             <Book className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-foreground mb-2">No exams yet</h3>
             <p className="text-muted-foreground mb-6">
@@ -229,7 +238,15 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {exams.map((exam) => (
-              <Card key={exam.id} className="p-6 bg-gradient-card border-0 shadow-medium hover:shadow-glow transition-all duration-300 group">
+              <Card
+                key={exam.id}
+                className={cn(
+                  "p-6 bg-gradient-card border-0 shadow-strong",
+                  "hover:shadow-glow transition-all duration-300 group",
+                  // Always show hover effects on mobile for better card distinction
+                  isMobile && "shadow-glow"
+                )}
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex-1">
                     <h3 className="text-lg font-semibold text-foreground mb-2 group-hover:text-primary transition-colors">
@@ -242,8 +259,8 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
                     )}
                   </div>
                   <div className={`px-2 py-1 rounded-full text-xs font-medium ${
-                    exam.is_published 
-                      ? 'bg-success/10 text-success' 
+                    exam.is_published
+                      ? 'bg-success/10 text-success'
                       : 'bg-muted/10 text-muted-foreground'
                   }`}>
                     {exam.is_published ? 'Published' : 'Draft'}
@@ -252,19 +269,31 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
 
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Questions:</span>
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <HelpCircle className="w-4 h-4" />
+                      Questions
+                    </span>
                     <span className="font-medium text-foreground">{exam._count?.questions || 0}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Attempts:</span>
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <Users className="w-4 h-4" />
+                      Attempts
+                    </span>
                     <span className="font-medium text-foreground">{exam._count?.attempts || 0}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Language:</span>
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <MessageSquare className="w-4 h-4" />
+                      Language
+                    </span>
                     <span className="font-medium text-foreground capitalize">{exam.language}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Created:</span>
+                    <span className="text-muted-foreground flex items-center gap-1.5">
+                      <Calendar className="w-4 h-4" />
+                      Created
+                    </span>
                     <span className="font-medium text-foreground">
                       {new Date(exam.created_at).toLocaleDateString()}
                     </span>

@@ -3,10 +3,13 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { cn } from "@/lib/utils";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { AuthUser, signOut } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import DashboardStatsGrid, { createStudentStats } from "./DashboardStatsGrid";
 import {
   BookOpen,
   Trophy,
@@ -17,7 +20,9 @@ import {
   Target,
   TrendingUp,
   User,
-  Users
+  Users,
+  CheckCircle,
+  XCircle
 } from "lucide-react";
 
 interface StudentDashboardProps {
@@ -45,6 +50,7 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
   const [loading, setLoading] = useState(true);
   const navigate = useNavigate();
   const { toast } = useToast();
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchAttempts();
@@ -203,46 +209,18 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
         </div>
       </Card>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-        <Card className="p-6 bg-gradient-card border-0 shadow-medium">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-              <BookOpen className="w-6 h-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Exams Taken</p>
-              <p className="text-2xl font-bold text-foreground">{attempts.length}</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-card border-0 shadow-medium">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
-              <Trophy className="w-6 h-6 text-success" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Average Score</p>
-              <p className="text-2xl font-bold text-foreground">{getAverageScore()}%</p>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-card border-0 shadow-medium">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
-              <TrendingUp className="w-6 h-6 text-warning" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Best Score</p>
-              <p className="text-2xl font-bold text-foreground">
-                {attempts.length > 0 ? Math.max(...attempts.map(a => a.score || 0)) : 0}%
-              </p>
-            </div>
-          </div>
-        </Card>
-      </div>
+      {/* Responsive Stats Grid */}
+      <DashboardStatsGrid
+        stats={createStudentStats({
+          examsTaken: attempts.length,
+          averageScore: getAverageScore(),
+          bestScore: attempts.length > 0 ? Math.max(...attempts.map(a => a.score || 0)) : 0,
+          currentStreak: 0, // This would need to be calculated from attempt dates
+          totalTimeSpent: "0h 0m" // This would need to be calculated from actual time data
+        })}
+        layout="two-up-one-down"
+        className="mb-8"
+      />
 
       {/* Exam History */}
       <div className="space-y-6">
@@ -253,7 +231,7 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
         {loading ? (
           <div className="space-y-4">
             {[...Array(5)].map((_, i) => (
-              <Card key={i} className="p-6 bg-gradient-card border-0 shadow-medium animate-pulse">
+              <Card key={i} className="p-6 bg-gradient-card border-0 shadow-strong animate-pulse">
                 <div className="flex items-center justify-between">
                   <div className="space-y-2 flex-1">
                     <div className="h-4 bg-muted rounded w-1/3"></div>
@@ -265,7 +243,7 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
             ))}
           </div>
         ) : attempts.length === 0 ? (
-          <Card className="p-12 bg-gradient-card border-0 shadow-medium text-center">
+          <Card className="p-12 bg-gradient-card border-0 shadow-strong text-center">
             <BookOpen className="w-16 h-16 text-muted-foreground mx-auto mb-4" />
             <h3 className="text-xl font-semibold text-foreground mb-2">No exams taken yet</h3>
             <p className="text-muted-foreground mb-6">
@@ -275,12 +253,32 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
         ) : (
           <div className="space-y-4">
             {attempts.map((attempt) => (
-              <Card key={attempt.id} className="p-6 bg-gradient-card border-0 shadow-medium hover:shadow-glow transition-all duration-300">
+              <Card
+                key={attempt.id}
+                className={cn(
+                  "p-6 bg-gradient-card border-0 shadow-strong",
+                  "hover:shadow-glow transition-all duration-300",
+                  // Always show hover effects on mobile for better card distinction
+                  isMobile && "shadow-glow"
+                )}
+              >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-foreground mb-2">
-                      {attempt.exam.title}
-                    </h3>
+                    <div className="flex items-center gap-2 mb-2">
+                      <h3 className="text-lg font-semibold text-foreground">
+                        {attempt.exam.title}
+                      </h3>
+                      {/* Status icon based on score */}
+                      <div className="flex items-center gap-1">
+                        {(attempt.score || 0) >= 80 ? (
+                          <CheckCircle className="w-4 h-4 text-success" />
+                        ) : (attempt.score || 0) >= 60 ? (
+                          <Target className="w-4 h-4 text-warning" />
+                        ) : (
+                          <XCircle className="w-4 h-4 text-destructive" />
+                        )}
+                      </div>
+                    </div>
                     <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />

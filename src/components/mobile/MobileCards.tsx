@@ -1,6 +1,16 @@
 import { useIsMobile } from '@/hooks/use-mobile';
 import { Card } from '@/components/ui/card';
 import { cn } from '@/lib/utils';
+import {
+  Users,
+  HelpCircle,
+  MessageSquare,
+  Calendar,
+  Target,
+  Trophy,
+  CheckCircle,
+  XCircle
+} from 'lucide-react';
 
 interface MobileCardProps {
   children: React.ReactNode;
@@ -23,7 +33,7 @@ export const MobileCard: React.FC<MobileCardProps> = ({
     <Card
       className={cn(
         // Base styles
-        'bg-gradient-card border-0 shadow-medium transition-all duration-200',
+        'bg-gradient-card border-0 shadow-strong transition-all duration-200',
         // Mobile optimizations
         isMobile && 'p-4 rounded-xl',
         !isMobile && 'p-6',
@@ -174,10 +184,13 @@ export const MobileExamCard: React.FC<MobileExamCardProps> = ({
             )}
           </div>
           <div className={cn(
-            "px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap",
+            "px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap flex items-center gap-1",
             getStatusColor(status)
           )}>
-            {status === 'in-progress' ? 'Active' : status.charAt(0).toUpperCase() + status.slice(1)}
+            {status === 'published' && <CheckCircle className="w-3 h-3" />}
+            {status === 'draft' && <XCircle className="w-3 h-3" />}
+            {status === 'in-progress' && <Target className="w-3 h-3" />}
+            <span>{status === 'in-progress' ? 'Active' : status.charAt(0).toUpperCase() + status.slice(1)}</span>
           </div>
         </div>
 
@@ -186,7 +199,10 @@ export const MobileExamCard: React.FC<MobileExamCardProps> = ({
           <div className="grid grid-cols-3 gap-4">
             {score !== undefined && (
               <div className="text-center">
-                <p className={cn("text-xs text-muted-foreground mb-1")}>Score</p>
+                <p className={cn("text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1")}>
+                  <Trophy className="w-3 h-3" />
+                  Score
+                </p>
                 <p className={cn("font-bold", getScoreColor(score))}>
                   {score}%
                 </p>
@@ -194,13 +210,19 @@ export const MobileExamCard: React.FC<MobileExamCardProps> = ({
             )}
             {attempts !== undefined && (
               <div className="text-center">
-                <p className={cn("text-xs text-muted-foreground mb-1")}>Attempts</p>
+                <p className={cn("text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1")}>
+                  <Users className="w-3 h-3" />
+                  Attempts
+                </p>
                 <p className={cn("font-bold text-foreground")}>{attempts}</p>
               </div>
             )}
             {questions !== undefined && (
               <div className="text-center">
-                <p className={cn("text-xs text-muted-foreground mb-1")}>Questions</p>
+                <p className={cn("text-xs text-muted-foreground mb-1 flex items-center justify-center gap-1")}>
+                  <HelpCircle className="w-3 h-3" />
+                  Questions
+                </p>
                 <p className={cn("font-bold text-foreground")}>{questions}</p>
               </div>
             )}
@@ -211,10 +233,16 @@ export const MobileExamCard: React.FC<MobileExamCardProps> = ({
         <div className="flex items-center justify-between pt-2 border-t border-border/50">
           <div className="flex items-center gap-4 text-xs text-muted-foreground">
             {date && (
-              <span>{new Date(date).toLocaleDateString()}</span>
+              <span className="flex items-center gap-1">
+                <Calendar className="w-3 h-3" />
+                {new Date(date).toLocaleDateString()}
+              </span>
             )}
             {language && (
-              <span className="capitalize">{language}</span>
+              <span className="flex items-center gap-1 capitalize">
+                <MessageSquare className="w-3 h-3" />
+                {language}
+              </span>
             )}
           </div>
           
