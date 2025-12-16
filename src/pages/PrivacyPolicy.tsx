@@ -1,4 +1,4 @@
-import Navbar from '@/components/Navbar';
+import ResponsiveNavbar from '@/components/ResponsiveNavbar';
 import Footer from '@/components/Footer';
 import LegalSidebar from '@/components/legal/LegalSidebar';
 import { lazy, Suspense } from 'react';
@@ -26,7 +26,7 @@ export default function PrivacyPolicy() {
         <BackgroundScene variant="legal" />
       </Suspense>
       
-      <Navbar />
+      <ResponsiveNavbar />
       <main className="pt-24 pb-24 relative z-10">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-8 max-w-6xl mx-auto">

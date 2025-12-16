@@ -1,0 +1,215 @@
+{
+    "name": "Do Stuff - Exam Platform",
+    "short_name": "Do Stuff",
+    "description": "Create engaging, interactive exams with multiple question types. From multiple choice to translations - make learning fun and assessment effective.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#3b82f6",
+    "orientation": "portrait-primary",
+    "scope": "/",
+    "lang": "en",
+    "categories": [
+        "education",
+        "productivity",
+        "utilities"
+    ],
+    "screenshots": [
+        {
+            "src": "/screenshots/desktop-screenshot.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Do Stuff Desktop View"
+        },
+        {
+            "src": "/screenshots/mobile-screenshot.png",
+            "sizes": "390x844",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Do Stuff Mobile View"
+        }
+    ],
+    "icons": [
+        {
+            "src": "/icon-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icon-96x96.png",
+            "sizes": "96x96",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icon-128x128.png",
+            "sizes": "128x128",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icon-144x144.png",
+            "sizes": "144x144",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icon-152x152.png",
+            "sizes": "152x152",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icon-192x192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icon-384x384.png",
+            "sizes": "384x384",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icon-512x512.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "maskable any"
+        },
+        {
+            "src": "/icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        }
+    ],
+    "shortcuts": [
+        {
+            "name": "Create Exam",
+            "short_name": "Create",
+            "description": "Quickly create a new exam",
+            "url": "/create-exam",
+            "icons": [
+                {
+                    "src": "/icon-192x192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Take Exam",
+            "short_name": "Take",
+            "description": "Join an exam with a share link",
+            "url": "/join",
+            "icons": [
+                {
+                    "src": "/icon-192x192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Dashboard",
+            "short_name": "Dashboard",
+            "description": "View your dashboard",
+            "url": "/dashboard",
+            "icons": [
+                {
+                    "src": "/icon-192x192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Profile",
+            "short_name": "Profile",
+            "description": "View your profile and settings",
+            "url": "/profile",
+            "icons": [
+                {
+                    "src": "/icon-192x192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Results",
+            "short_name": "Results",
+            "description": "View your exam results",
+            "url": "/results",
+            "icons": [
+                {
+                    "src": "/icon-192x192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        },
+        {
+            "name": "Exams",
+            "short_name": "Exams",
+            "description": "View all your created exams",
+            "url": "/exams",
+            "icons": [
+                {
+                    "src": "/icon-192x192.png",
+                    "sizes": "192x192"
+                }
+            ]
+        }
+    ],
+    "prefer_related_applications": false,
+    "edge_side_panel": {
+        "preferred_width": 400
+    },
+    "launch_handler": {
+        "client_mode": "navigate-existing"
+    },
+    "protocol_handlers": [
+        {
+            "protocol": "web+dostuff",
+            "url": "/join?code=%s"
+        }
+    ],
+    "share_target": {
+        "action": "/share-exam",
+        "method": "GET",
+        "params": {
+            "title": "title",
+            "text": "text",
+            "url": "url"
+        }
+    },
+    "file_handlers": [
+        {
+            "action": "/import-exam",
+            "accept": {
+                "application/json": [
+                    ".dostuff",
+                    ".exam"
+                ]
+            }
+        }
+    ],
+    "display_override": [
+        "window-controls-overlay",
+        "standalone",
+        "minimal-ui"
+    ],
+    "handle_links": "preferred",
+    "related_applications": [],
+    "permissions": [
+        "notifications",
+        "push",
+        "background-sync",
+        "geolocation",
+        "camera",
+        "microphone",
+        "device-orientation",
+        "device-memory",
+        "clipboard-read",
+        "clipboard-write"
+    ]
+}
