@@ -27,7 +27,7 @@ export default function PrivacyPolicy() {
       </Suspense>
       
       <ResponsiveNavbar />
-      <main className="pt-24 pb-24 relative z-10">
+      <main className="pt-6 pb-24 relative z-10">
         <div className="container mx-auto px-4">
           <div className="flex flex-col lg:flex-row gap-8 max-w-6xl mx-auto">
             <LegalSidebar chapters={chapters} />

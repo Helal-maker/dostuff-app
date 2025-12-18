@@ -162,7 +162,7 @@ const NavigationTest = () => {
               <div className="grid grid-cols-3 gap-2 text-xs">
                 <div className="text-center">
                   <div className="font-medium">Mobile</div>
-                  <div className="text-gray-600">< 768px</div>
+                  <div className="text-gray-600">768px</div>
                 </div>
                 <div className="text-center">
                   <div className="font-medium">Tablet</div>
@@ -170,7 +170,7 @@ const NavigationTest = () => {
                 </div>
                 <div className="text-center">
                   <div className="font-medium">Desktop</div>
-                  <div className="text-gray-600">> 1024px</div>
+                  <div className="text-gray-600"> 1024px</div>
                 </div>
               </div>
             </div>
@@ -195,7 +195,7 @@ const NavigationTest = () => {
       <ResponsiveNavbar />
 
       {/* Test Content */}
-      <div className="pt-24 pb-32 px-6">
+      <div className="pt-6 pb-32 px-6">
         <div className="max-w-4xl mx-auto space-y-8">
           {/* Header */}
           <div className="text-center space-y-4">

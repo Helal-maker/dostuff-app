@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { ArrowRight, BookOpen, Users, Trophy } from "lucide-react";
+import { ArrowRight, HelpCircle, Users, Trophy } from "lucide-react";
 import heroImage from "@/assets/hero-education.jpg";
 import { useNavigate } from "react-router-dom";
 
@@ -19,7 +19,7 @@ const HeroSection = () => {
           {/* Text Content */}
           <div className="text-center lg:text-left">
             <div className="inline-flex items-center gap-2 bg-card/80 backdrop-blur-sm px-4 py-2 rounded-full shadow-soft mb-6">
-              <BookOpen className="text-primary h-[25px] w-[25px]" />
+              <HelpCircle className="text-primary h-[25px] w-[25px]" />
               <span className="font-medium text-xl text-black"> Exam Platform</span>
             </div>
 
@@ -50,7 +50,7 @@ const HeroSection = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
-                  <BookOpen className="w-6 h-6 text-primary" />
+                  <HelpCircle className="w-6 h-6 text-primary" />
                 </div>
                 <div>
                   <h3 className="text-foreground font-bold">Multiple Formats</h3>

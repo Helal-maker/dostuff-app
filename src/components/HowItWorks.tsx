@@ -15,7 +15,7 @@ import {
   Timer,
   Eye,
   Award,
-  BookOpen,
+  HelpCircle,
   Target,
   Zap
 } from "lucide-react";
@@ -174,7 +174,7 @@ const HowItWorks = () => {
       <section className="pt-32 pb-12 sm:pb-16 px-4 sm:px-6 lg:px-8">
         <div className="container mx-auto text-center max-w-4xl">
           <Badge variant="secondary" className="mb-6 px-3 py-1.5 sm:px-4 sm:py-2 text-xs sm:text-sm font-medium">
-            <BookOpen className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
+            <HelpCircle className="w-3 h-3 sm:w-4 sm:h-4 mr-2" />
             Complete Platform Guide
           </Badge>
           
@@ -465,7 +465,7 @@ const HowItWorks = () => {
               <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 text-center">Student Benefits</h3>
               <div className="space-y-3 sm:space-y-4">
                 {[
-                  "join exams",
+                  "Join exams easily",
                   "Clean, distraction-free interface",
                   "Progress saving automatically",
                   "Multiple device compatibility",

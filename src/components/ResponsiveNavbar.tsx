@@ -4,7 +4,7 @@ import { useIsMobile } from '@/hooks/use-mobile';
 import { useAuth } from '@/hooks/useAuth';
 import {
   Home,
-  BookOpen,
+  HelpCircle,
   BarChart3,
   User,
   Plus,
@@ -12,7 +12,8 @@ import {
   X,
   ArrowLeft,
   Settings,
-  LogOut
+  LogOut,
+  BookOpen
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -51,12 +52,12 @@ const ResponsiveNavbar = () => {
   const getNavigationItems = (): NavigationItem[] => {
     const commonItems: NavigationItem[] = [
       { icon: Home, label: 'Home', path: '/', key: 'home' },
-      { icon: BookOpen, label: 'How it Works', path: '/how-it-works', key: 'how-it-works' }
+      { icon: HelpCircle, label: 'How it Works', path: '/how-it-works', key: 'how-it-works' }
     ];
 
     const authenticatedItems: NavigationItem[] = isAuthenticated && !loading ? [
       !isTeacher && { icon: Plus, label: 'Join Exam', path: '/join', key: 'join' },
-      isTeacher && { icon: Plus, label: 'Create Exam', path: '/create-exam', key: 'create-exam' },
+      ...(isTeacher ? [{ icon: Plus, label: 'Create Exam', path: '/create-exam', key: 'create-exam' }] : []),
       { icon: isTeacher ? BookOpen : BarChart3, label: isTeacher ? 'Exams' : 'Results', path: isTeacher ? '/exams' : '/results', key: isTeacher ? 'exams' : 'results' },
       { icon: User, label: 'Profile', path: '/profile', key: 'profile' }
     ].filter(Boolean) as NavigationItem[] : [];
@@ -232,42 +233,18 @@ const ResponsiveNavbar = () => {
   // Desktop Navigation (floating with height constraints)
   return (
     <>
-      {/* Top Navigation Bar */}
-      <nav className="sticky top-0 z-50 bg-background/80 backdrop-blur-md border-b border-border shadow-soft">
-        <div className="container mx-auto px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            {/* Logo */}
-            <div className="flex items-center gap-2 cursor-pointer" onClick={() => navigate('/')}>
-              <img src={logo} alt="Do Stuff" className="w-8 h-8 rounded-lg object-cover" />
-              <span className="text-xl font-bold text-foreground">Do Stuff</span>
-            </div>
-
-            {/* Desktop CTA */}
-            <div className="hidden md:flex items-center gap-3">
-              {!isAuthenticated && !loading && (
-                <>
-                  <Button variant="ghost" onClick={() => navigate('/auth')}>
-                    Sign In
-                  </Button>
-                  <Button variant="hero" onClick={() => navigate('/auth')}>
-                    Get Started
-                  </Button>
-                </>
-              )}
-            </div>
-
-            {/* Mobile Menu Button */}
-            <button className="md:hidden p-2" onClick={() => setIsMenuOpen(!isMenuOpen)} aria-label="Toggle menu">
-              {isMenuOpen ? <X className="w-6 h-6 text-foreground" /> : <Menu className="w-6 h-6 text-foreground" />}
-            </button>
-          </div>
-        </div>
-      </nav>
-
       {/* Floating Navigation Sidebar for Desktop */}
       <nav className="fixed left-6 top-1/2 transform -translate-y-1/2 z-40">
         <Card className="bg-background/95 backdrop-blur-md border border-border shadow-2xl rounded-2xl p-2 max-h-[60vh] overflow-hidden">
           <div className="flex flex-col items-center space-y-2">
+            {/* Logo and App Name at Top */}
+            <div className="flex flex-col items-center gap-2 py-2 cursor-pointer" onClick={() => navigate('/')} title="Home">
+              <img src={logo} alt="Do Stuff" className="w-8 h-8 rounded-lg object-cover" />
+              <span className="text-sm font-bold text-foreground">Do Stuff</span>
+            </div>
+            
+            <div className="w-8 h-px bg-border my-1" />
+            
             {navigationItems.map((item) => {
               const Icon = item.icon;
               const isActive = activeItem === item.key;
@@ -350,7 +327,7 @@ const ResponsiveNavbar = () => {
             
             <div className="flex-1 p-4 space-y-4">
               {navigationItems.map((item) => (
-                <button 
+                <button
                   key={item.key}
                   onClick={() => handleNavigate(item.path)}
                   className="block w-full text-left p-3 rounded-lg hover:bg-muted/50 transition-colors"
@@ -361,15 +338,15 @@ const ResponsiveNavbar = () => {
               
               {!isAuthenticated && !loading && (
                 <div className="pt-4 space-y-2 border-t border-border">
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full"
                     onClick={() => navigate('/auth')}
                   >
                     Sign In
                   </Button>
-                  <Button 
-                    variant="hero" 
+                  <Button
+                    variant="hero"
                     className="w-full"
                     onClick={() => navigate('/auth')}
                   >

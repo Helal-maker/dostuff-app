@@ -1,6 +1,6 @@
 {
     "name": "Do Stuff - Exam Platform",
-    "version":"2.7.0",
+    "version":"2.9.0",
     "short_name": "Do Stuff",
     "description": "Create engaging, interactive exams with multiple question types. From multiple choice to translations - make learning fun and assessment effective.",
     "start_url": "/",

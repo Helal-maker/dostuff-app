@@ -394,28 +394,29 @@ const Results = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6 pt-0">
-              <div className="h-80">
-                <ChartContainer config={chartConfig}>
+              <div className="h-64 sm:h-72 md:h-80 lg:h-96">
+                <ChartContainer config={chartConfig} className="w-full h-full mobile-chart">
                   <ResponsiveContainer width="100%" height="100%">
                     <LineChart
                       data={performanceTrend}
                       margin={{
-                        top: 20,
-                        right: 30,
-                        left: 20,
+                        top: 10,
+                        right: 20,
+                        left: 15,
                         bottom: 5,
                       }}
                     >
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                      <XAxis 
-                        dataKey="date" 
+                      <XAxis
+                        dataKey="date"
                         className="text-muted-foreground"
-                        tick={{ fontSize: 12 }}
+                        tick={{ fontSize: 10 }}
+                        interval="preserveStartEnd"
                       />
-                      <YAxis 
+                      <YAxis
                         domain={[0, 100]}
                         className="text-muted-foreground"
-                        tick={{ fontSize: 12 }}
+                        tick={{ fontSize: 10 }}
                       />
                       <ChartTooltip
                         content={({ active, payload, label }) => {
@@ -447,16 +448,16 @@ const Results = () => {
                         type="monotone"
                         dataKey="score"
                         stroke={getTrendLineColor(performanceTrend)}
-                        strokeWidth={3}
-                        dot={{ 
+                        strokeWidth={2}
+                        dot={{
                           fill: getTrendLineColor(performanceTrend),
-                          strokeWidth: 2,
-                          r: 4,
+                          strokeWidth: 1,
+                          r: 3,
                         }}
-                        activeDot={{ 
-                          r: 6, 
+                        activeDot={{
+                          r: 5,
                           stroke: getTrendLineColor(performanceTrend),
-                          strokeWidth: 2,
+                          strokeWidth: 1,
                           fill: "white"
                         }}
                       />

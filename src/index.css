@@ -333,6 +333,13 @@ All colors MUST be HSL.
   content: attr(data-icon);
 }
 
+/* Mobile chart styling for recharts-surface */
+.mobile-chart .recharts-surface {
+  width: 100% !important;
+  position: absolute !important;
+  right: 43px !important;
+}
+
 /* Ensure Material Icons display correctly */
 [class*="material-icons"] {
   font-family: 'Material Icons Round', 'Material Icons', sans-serif !important;
