@@ -133,7 +133,7 @@ const router = createBrowserRouter([
         <PWAInstallPrompt delay={3000} showAdvanced={true} />
         <OfflineIndicator />
         <ResponsiveNavbar />
-        <AuthGuard requireOnboarding={true}>
+        <AuthGuard>
           <TeacherOnboarding />
         </AuthGuard>
       </>
