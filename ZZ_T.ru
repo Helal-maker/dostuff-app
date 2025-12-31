@@ -1,1 +1,0 @@
-THis is the metadata file for the Russian language translation of the ZZ_T module.
