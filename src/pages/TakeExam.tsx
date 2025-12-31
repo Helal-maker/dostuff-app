@@ -7,6 +7,17 @@ import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import ExamQuestionRenderer from "@/components/exam/ExamQuestionRenderer";
+import {
+  initializeAntiCheating,
+  disableAntiCheating,
+  questionTimeTracker,
+  examAttemptLimiter,
+  suspiciousBehaviorDetector,
+  tabSwitchDetector,
+  logExamAttemptDevice,
+  randomizeExamQuestions,
+  verifyRandomizedAnswer
+} from "@/lib/anti-cheating";
 
 interface Exam {
   id: string;
@@ -45,6 +56,7 @@ const TakeExam = () => {
 
   const [exam, setExam] = useState<Exam | null>(null);
   const [questions, setQuestions] = useState<Question[]>([]);
+  const [randomizedQuestions, setRandomizedQuestions] = useState<Question[]>([]);
   const [attempt, setAttempt] = useState<ExamAttempt | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [answers, setAnswers] = useState<{ [key: string]: any }>({});
@@ -52,6 +64,8 @@ const TakeExam = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [examStarted, setExamStarted] = useState(false);
+  const [suspiciousActivities, setSuspiciousActivities] = useState<any[]>([]);
 
   useEffect(() => {
     // Wait for auth to finish loading
@@ -63,6 +77,41 @@ const TakeExam = () => {
     }
     loadExam();
   }, [shareLink, user, authLoading]);
+
+  useEffect(() => {
+    // Initialize anti-cheating features when exam starts
+    if (!examStarted || !exam || !user) return;
+
+    // Enable all anti-cheating protections
+    initializeAntiCheating({
+      copyPasteProtection: true,
+      fullScreenMode: true,
+      rightClickDisabled: true,
+      randomizeQuestions: false, // Already done in loadExam
+      trackQuestionTime: true,
+      detectTabSwitch: true,
+      browserLock: true
+    });
+
+    // Start question timer for first question
+    if (randomizedQuestions.length > 0) {
+      questionTimeTracker.startQuestion(randomizedQuestions[currentQuestionIndex].id);
+    }
+
+    // Setup tab switch violation callback
+    tabSwitchDetector.config.onViolation = (violation: any) => {
+      setSuspiciousActivities(prev => [...prev, {
+        type: 'tab-switch',
+        timestamp: violation.timestamp,
+        details: violation
+      }]);
+    };
+
+    return () => {
+      // Cleanup on unmount
+      disableAntiCheating();
+    };
+  }, [examStarted, exam, user]);
 
   useEffect(() => {
     if (timeRemaining === null || timeRemaining <= 0) return;
@@ -142,10 +191,20 @@ const TakeExam = () => {
       setExam(examData as Exam);
       setQuestions((questionsData || []) as Question[]);
 
+      // Randomize questions for anti-cheating
+      const randomized = randomizeExamQuestions((questionsData || []) as Question[], false);
+      setRandomizedQuestions(randomized);
+
       // Set timer if exam has time limit
       if (examData.time_limit) {
         setTimeRemaining(examData.time_limit * 60); // Convert minutes to seconds
       }
+
+      // Mark exam as started to trigger anti-cheating initialization
+      setExamStarted(true);
+
+      // Log device information for anti-cheating
+      await logExamAttemptDevice(examData.id, user!.id, supabase);
 
     } catch (error) {
       console.error('Error loading exam:', error);
@@ -159,6 +218,9 @@ const TakeExam = () => {
     const newAnswers = { ...answers, [questionId]: answer };
     setAnswers(newAnswers);
     
+    // Track answer changes for suspicious behavior detection
+    questionTimeTracker.recordAnswerChange(questionId);
+    
     // Save answer to database
     if (attempt) {
       supabase
@@ -168,6 +230,34 @@ const TakeExam = () => {
         .then(({ error }) => {
           if (error) console.error('Error saving answer:', error);
         });
+    }
+  };
+
+  const handleNavigatePrevious = () => {
+    if (currentQuestionIndex > 0) {
+      // End timer for current question
+      if (randomizedQuestions.length > 0) {
+        questionTimeTracker.endQuestion(randomizedQuestions[currentQuestionIndex].id);
+      }
+      setCurrentQuestionIndex(currentQuestionIndex - 1);
+      // Start timer for new question
+      if (randomizedQuestions.length > 0) {
+        questionTimeTracker.startQuestion(randomizedQuestions[currentQuestionIndex - 1].id);
+      }
+    }
+  };
+
+  const handleNavigateNext = () => {
+    if (currentQuestionIndex < questions.length - 1) {
+      // End timer for current question
+      if (randomizedQuestions.length > 0) {
+        questionTimeTracker.endQuestion(randomizedQuestions[currentQuestionIndex].id);
+      }
+      setCurrentQuestionIndex(currentQuestionIndex + 1);
+      // Start timer for new question
+      if (randomizedQuestions.length > 0) {
+        questionTimeTracker.startQuestion(randomizedQuestions[currentQuestionIndex + 1].id);
+      }
     }
   };
 
@@ -238,25 +328,79 @@ const TakeExam = () => {
     setIsSubmitting(true);
 
     try {
+      // End tracking for the last question
+      if (randomizedQuestions.length > 0) {
+        questionTimeTracker.endQuestion(randomizedQuestions[currentQuestionIndex].id);
+      }
+
       const { earnedPoints, totalPoints } = calculateScore();
       const score = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
       const passed = score >= 50; // 50% pass threshold
 
+      // Analyze suspicious behavior
+      const stats = questionTimeTracker.getStatistics();
+      const behaviorAnalysis = suspiciousBehaviorDetector.analyzeBehavior({
+        score: earnedPoints,
+        totalPoints,
+        timeTaken: Math.round((Date.now() - parseInt(attempt.id)) / 1000), // Approximate time
+        questionCount: questions.length,
+        tabSwitches: tabSwitchDetector.getTabSwitchCount(),
+        fullscreenExits: 0, // Would need separate tracking
+        copyAttempts: 0, // Copy is blocked but logged in JS console
+        rushingCount: stats.rushingQuestions,
+        questionPerformance: questions.map(q => ({
+          difficulty: q.points > 5 ? 'hard' : 'easy',
+          correct: answers[q.id] === q.question_data.correctAnswer
+        }))
+      });
+
+      // Prepare exam attempt update with anti-cheating data
+      const updateData: any = {
+        answers,
+        score: Math.round(score * 100) / 100,
+        total_points: Math.round(totalPoints * 100) / 100,
+        is_completed: true,
+        passed,
+        end_time: new Date().toISOString(),
+        // Anti-cheating metadata
+        tab_switches: tabSwitchDetector.getTabSwitchCount(),
+        time_metrics: JSON.stringify(stats),
+        suspicious_behavior_score: behaviorAnalysis.overallScore,
+        suspicious_behavior_flags: JSON.stringify(behaviorAnalysis.flags)
+      };
+
+      // Update exam attempt
       const { data: updatedAttempt, error } = await supabase
         .from('exam_attempts')
-        .update({
-          answers,
-          score: Math.round(score * 100) / 100, // Round to 2 decimal places
-          total_points: Math.round(totalPoints * 100) / 100, // Round to 2 decimal places
-          is_completed: true,
-          passed,
-          end_time: new Date().toISOString()
-        })
+        .update(updateData)
         .eq('id', attempt.id)
         .select()
         .single();
 
       if (error) throw error;
+
+      // Log flagged attempts for high-risk behavior
+      if (behaviorAnalysis.riskLevel === 'high' || behaviorAnalysis.overallScore >= 60) {
+        await supabase
+          .from('exam_flagged_attempts')
+          .insert({
+            exam_id: exam!.id,
+            user_id: user!.id,
+            risk_level: behaviorAnalysis.riskLevel,
+            flags: behaviorAnalysis.flags,
+            analysis: behaviorAnalysis
+          })
+          .catch(err => console.warn('Could not log flagged attempt:', err));
+      }
+
+      // Console log for testing
+      console.log('📊 Exam Completed - Anti-Cheating Analysis:', {
+        riskLevel: behaviorAnalysis.riskLevel,
+        suspiciousScore: behaviorAnalysis.overallScore,
+        tabSwitches: tabSwitchDetector.getTabSwitchCount(),
+        rushingQuestions: stats.rushingQuestions,
+        recommendation: behaviorAnalysis.recommendation
+      });
 
       toast({
         title: passed ? "Congratulations!" : "Exam Submitted",
@@ -325,7 +469,9 @@ const TakeExam = () => {
   }
 
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-  const currentQuestion = questions[currentQuestionIndex];
+  // Use randomized questions if available, otherwise use regular questions
+  const displayQuestions = randomizedQuestions.length > 0 ? randomizedQuestions : questions;
+  const currentQuestion = displayQuestions[currentQuestionIndex];
 
   return (
     <div className="bg-gradient-to-br from-violet-600 via-purple-600 to-pink-600 min-h-screen text-white">
@@ -393,7 +539,7 @@ const TakeExam = () => {
         <footer className="px-6 pb-8">
           <div className="flex gap-4">
             <Button
-              onClick={() => setCurrentQuestionIndex(Math.max(0, currentQuestionIndex - 1))}
+              onClick={handleNavigatePrevious}
               disabled={currentQuestionIndex === 0}
               className="flex-1 py-4 px-6 rounded-2xl bg-white/10 hover:bg-white/20 backdrop-blur-sm border border-white/10 text-white font-semibold flex items-center justify-center transition-all active:scale-95 group disabled:opacity-50 disabled:cursor-not-allowed"
             >
@@ -421,7 +567,7 @@ const TakeExam = () => {
               </Button>
             ) : (
               <Button
-                onClick={() => setCurrentQuestionIndex(Math.min(questions.length - 1, currentQuestionIndex + 1))}
+                onClick={handleNavigateNext}
                 className="flex-1 py-4 px-6 rounded-2xl bg-white/20 hover:bg-white/30 backdrop-blur-md border border-white/20 text-white font-semibold flex items-center justify-center shadow-lg transition-all active:scale-95 group"
               >
                 Next
