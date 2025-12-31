@@ -74,9 +74,10 @@ export function getDeviceInfo(): DeviceInfo {
 /**
  * Get browser fingerprint (device identifier)
  * Helps detect if multiple students are using same device
+ * @param deviceInfo Optional device info object. If not provided, will call getDeviceInfo()
  */
-export function generateDeviceFingerprint(): string {
-  const info = getDeviceInfo();
+export function generateDeviceFingerprint(deviceInfo?: Record<string, any>): string {
+  const info = deviceInfo || getDeviceInfo();
   
   // Combine multiple factors to create a fingerprint
   const fingerprint = [
@@ -91,7 +92,7 @@ export function generateDeviceFingerprint(): string {
     (screen as any).colorDepth // Screen colors
   ].join('|');
 
-  // Simple hash function
+  // DJB2 hash function for consistent fingerprinting
   let hash = 0;
   for (let i = 0; i < fingerprint.length; i++) {
     const char = fingerprint.charCodeAt(i);

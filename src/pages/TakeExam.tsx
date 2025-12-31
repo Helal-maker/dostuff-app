@@ -11,7 +11,7 @@ import {
   initializeAntiCheating,
   disableAntiCheating,
   questionTimeTracker,
-  suspiciousBehaviorDetector,
+  createBehaviorDetector,
   tabSwitchDetector,
   logExamAttemptDevice,
   randomizeExamQuestions,
@@ -74,6 +74,8 @@ const TakeExam = () => {
   const [lastViolationType, setLastViolationType] = useState<string>('');
   const [showTerminationModal, setShowTerminationModal] = useState(false);
   const [terminationMessage, setTerminationMessage] = useState<string>('');
+  const [behaviorDetector] = useState(() => createBehaviorDetector());
+  const [examStartTime, setExamStartTime] = useState<number | null>(null);
 
   useEffect(() => {
     // Wait for auth to finish loading
@@ -194,6 +196,9 @@ const TakeExam = () => {
 
       if (attemptsError) throw attemptsError;
 
+      // Declare newAttempt in outer scope for use after conditional
+      let newAttempt: any = null;
+
       // Check if user has exceeded attempt limit
       if (attemptsData && attemptsData.length > (examData.max_attempts || 1)) {
         const lastAttempt = attemptsData[0];
@@ -205,7 +210,7 @@ const TakeExam = () => {
         setAnswers((lastAttempt.answers as { [key: string]: any }) || {});
       } else {
         // Create new attempt
-        const { data: newAttempt, error: attemptError } = await supabase
+        const { data: attempt, error: attemptError } = await supabase
           .from('exam_attempts')
           .insert({
             exam_id: examData.id,
@@ -216,6 +221,7 @@ const TakeExam = () => {
           .single();
 
         if (attemptError) throw attemptError;
+        newAttempt = attempt;
         setAttempt(newAttempt as ExamAttempt);
       }
 
@@ -350,6 +356,7 @@ const TakeExam = () => {
         .insert({
           exam_id: exam.id,
           user_id: user.id,
+          attempt_id: attempt.id,
           risk_level: 'high',
           flags: violations,
           analysis: {
@@ -455,9 +462,9 @@ const TakeExam = () => {
       const score = totalPoints > 0 ? (earnedPoints / totalPoints) * 100 : 0;
       const passed = score >= 50; // 50% pass threshold
 
-      // Analyze suspicious behavior
+      // Analyze suspicious behavior using this exam's detector instance
       const stats = questionTimeTracker.getStatistics();
-      const behaviorAnalysis = suspiciousBehaviorDetector.analyzeBehavior({
+      const behaviorAnalysis = behaviorDetector.analyzeBehavior({
         score: earnedPoints,
         totalPoints,
         timeTaken: Math.round((Date.now() - parseInt(attempt.id)) / 1000), // Approximate time
@@ -504,6 +511,7 @@ const TakeExam = () => {
           .insert({
             exam_id: exam!.id,
             user_id: user!.id,
+            attempt_id: attempt!.id,
             risk_level: behaviorAnalysis.riskLevel,
             flags: behaviorAnalysis.flags,
             analysis: behaviorAnalysis

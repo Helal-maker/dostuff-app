@@ -25,6 +25,7 @@ class TabSwitchDetector {
   private violations: TabSwitchViolation[] = [];
   private lastVisibleTime: number = Date.now();
   private lastFocusTime: number = Date.now();
+  private lastViolationTimestamp: number = 0; // Track last violation to deduplicate
   private handlers: Map<string, EventListener> = new Map();
 
   constructor(config: TabSwitchConfig = { enabled: true, maxViolations: 3 }) {
@@ -87,6 +88,13 @@ class TabSwitchDetector {
       }
     } else {
       // Student returned to tab
+      const now = Date.now();
+      
+      // Deduplicate: skip if another violation was recorded less than 300ms ago
+      if (now - this.lastViolationTimestamp < 300) {
+        return;
+      }
+
       const duration = Date.now() - this.lastVisibleTime;
       
       const violation: TabSwitchViolation = {
@@ -97,6 +105,7 @@ class TabSwitchDetector {
       };
 
       this.violations.push(violation);
+      this.lastViolationTimestamp = now;
       
       if (this.config.onViolation) {
         this.config.onViolation(violation);
@@ -128,10 +137,16 @@ class TabSwitchDetector {
    * Handle window focus gain
    */
   private handleWindowFocus() {
-    const duration = Date.now() - this.lastFocusTime;
+    const now = Date.now();
+    const duration = now - this.lastFocusTime;
     
     // Only record if away for more than 100ms (ignore quick focus changes)
     if (duration > 100) {
+      // Deduplicate: skip if another violation was recorded less than 300ms ago
+      if (now - this.lastViolationTimestamp < 300) {
+        return;
+      }
+
       const violation: TabSwitchViolation = {
         timestamp: this.lastFocusTime,
         windowFocusLost: true,
@@ -140,6 +155,7 @@ class TabSwitchDetector {
       };
 
       this.violations.push(violation);
+      this.lastViolationTimestamp = now;
 
       if (this.config.onViolation) {
         this.config.onViolation(violation);
@@ -227,6 +243,7 @@ class TabSwitchDetector {
     this.violations = [];
     this.lastVisibleTime = Date.now();
     this.lastFocusTime = Date.now();
+    this.lastViolationTimestamp = 0;
   }
 }
 

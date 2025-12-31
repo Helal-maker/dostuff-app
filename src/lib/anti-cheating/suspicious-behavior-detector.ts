@@ -304,8 +304,13 @@ class SuspiciousBehaviorDetector {
   }
 }
 
-// Export singleton instance
-export const suspiciousBehaviorDetector = new SuspiciousBehaviorDetector();
+/**
+ * Factory function to create a new SuspiciousBehaviorDetector instance
+ * Use this for each exam attempt to ensure no state leakage between exams
+ */
+export function createBehaviorDetector(): SuspiciousBehaviorDetector {
+  return new SuspiciousBehaviorDetector();
+}
 
 // Export class for custom instantiation
 export { SuspiciousBehaviorDetector };

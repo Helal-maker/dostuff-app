@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { generateDeviceFingerprint } from "./device-tracking";
 
 export interface SecurityEvent {
   event_type: "tab-switch" | "fullscreen-exit" | "devtools" | "copy-paste" | "right-click";
@@ -28,15 +29,15 @@ export async function trackExamAttemptStart(
   }
 ) {
   try {
-    // Get IP address
-    const ipResponse = await fetch("https://api.ipify.org?format=json").catch(() => null);
-    const ipData = ipResponse ? await ipResponse.json() : { ip: "unknown" };
+    // Get IP address with multiple fallback providers
+    const ipAddress = await fetchIPAddressWithFallback();
 
     // Log device information
     const { error } = await supabase.from("exam_attempt_logs").insert({
       exam_id: examId,
       user_id: userId,
-      ip_address: ipData.ip,
+      attempt_id: attemptId,
+      ip_address: ipAddress,
       device_fingerprint: generateDeviceFingerprint(deviceInfo),
       user_agent: deviceInfo.userAgent,
       platform: deviceInfo.platform,
@@ -49,6 +50,35 @@ export async function trackExamAttemptStart(
   } catch (error) {
     console.error("Error in trackExamAttemptStart:", error);
   }
+}
+
+/**
+ * Fetch IP address with multiple provider fallback
+ */
+async function fetchIPAddressWithFallback(): Promise<string> {
+  const ipApis = [
+    'https://api.ipify.org?format=json',
+    'https://api64.ipify.org?format=json',
+    'https://ip-api.com/json/',
+    'https://ipapi.co/json/'
+  ];
+
+  for (const api of ipApis) {
+    try {
+      const response = await fetch(api, { signal: AbortSignal.timeout(5000) });
+      if (!response.ok) continue;
+
+      const data: any = await response.json();
+      const ip = data.ip || data.query;
+      if (ip) return ip;
+    } catch (error) {
+      // Try next API
+      continue;
+    }
+  }
+
+  console.warn('Failed to fetch IP address from all services, using fallback');
+  return "unknown";
 }
 
 /**
@@ -150,13 +180,10 @@ export async function getFlaggedAttemptsForTeacher(examId: string) {
   try {
     const { data, error } = await supabase
       .from("exam_flagged_attempts")
-      .select(
-        `
+      .select(`
         *,
-        exam:exams(title),
-        user:auth.users(email)
-      `
-      )
+        exam:exams(title)
+      `)
       .eq("exam_id", examId)
       .order("created_at", { ascending: false });
 
@@ -226,14 +253,6 @@ export async function getAttemptAnalytics(attemptId: string) {
     console.error("Error in getAttemptAnalytics:", error);
     return { securityEvents: [], questionOrder: null, deviceLogs: null };
   }
-}
-
-/**
- * Helper: Generate device fingerprint from device info
- */
-function generateDeviceFingerprint(deviceInfo: Record<string, string>): string {
-  const fingerprint = `${deviceInfo.platform}-${deviceInfo.screenResolution}-${deviceInfo.language}`;
-  return btoa(fingerprint);
 }
 
 /**

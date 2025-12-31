@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
@@ -53,8 +53,8 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
     fetchFlaggedAttempts();
   }, []);
 
-  // Subscribe to real-time flagged attempts
-  useRealTimeFlaggedAttempts((newFlaggedAttempt) => {
+  // Memoized handler for real-time flagged attempts to prevent unsubscribe/resubscribe on every render
+  const handleNewFlaggedAttempt = useCallback((newFlaggedAttempt: any) => {
     // Add new flagged attempt to the top of the list
     setFlaggedAttempts(prev => {
       // Check if already exists
@@ -72,7 +72,10 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
       description: `A new suspicious attempt has been detected and flagged for review.`,
       variant: 'destructive'
     });
-  });
+  }, [toast]);
+
+  // Subscribe to real-time flagged attempts with memoized handler
+  useRealTimeFlaggedAttempts(handleNewFlaggedAttempt);
 
   const fetchExams = async () => {
     try {
@@ -149,13 +152,13 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
 
       const examIds = examsData.map(e => e.id);
 
-      // Get flagged attempts for these exams
+      // Get flagged attempts for these exams (using profiles instead of auth.users for RLS safety)
       const { data: flaggedData, error: flaggedError } = await supabase
         .from('exam_flagged_attempts')
         .select(`
           *,
           exam:exams(id, title),
-          user:auth.users(email)
+          profile:profiles(email)
         `)
         .in('exam_id', examIds)
         .eq('reviewed', false)
@@ -302,7 +305,7 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
                     )}
                   </div>
                   <Button
-                    onClick={() => navigate(`/exam-results/${attempt.id}`)}
+                    onClick={() => navigate(`/exam-results/${attempt.attempt_id}`)}
                     variant="outline"
                     size="sm"
                     className="border-red-300 dark:border-red-700"

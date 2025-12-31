@@ -68,7 +68,7 @@ import {
 
 // Suspicious Behavior Detection
 import {
-  suspiciousBehaviorDetector,
+  createBehaviorDetector,
   SuspiciousBehaviorDetector
 } from './suspicious-behavior-detector';
 
@@ -121,7 +121,7 @@ export {
   DeviceTracker,
   browserLock,
   BrowserLock,
-  suspiciousBehaviorDetector,
+  createBehaviorDetector,
   SuspiciousBehaviorDetector,
   examViolationTracker,
   ExamViolationTracker,
@@ -148,6 +148,11 @@ export function initializeAntiCheating(config: any = {}) {
     detectTabSwitch = true,
     browserLock: enableBrowserLock = true
   } = config;
+
+  // Reset all detectors to clear state from previous exams
+  tabSwitchDetector.reset();
+  questionTimeTracker.reset();
+  examViolationTracker.reset();
 
   // Enable all protections
   if (enableCopyPaste) {
