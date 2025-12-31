@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useRealTimeExamAttempts } from "@/hooks/useRealTimeExam";
 import { AuthUser, signOut } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -22,7 +23,8 @@ import {
   User,
   Users,
   CheckCircle,
-  XCircle
+  XCircle,
+  AlertCircle
 } from "lucide-react";
 
 interface StudentDashboardProps {
@@ -42,6 +44,9 @@ interface ExamAttempt {
   end_time: string;
   is_completed: boolean;
   passed: boolean;
+  is_terminated?: boolean;
+  termination_reason?: string;
+  failure_reason?: string;
 }
 
 const StudentDashboard = ({ user }: StudentDashboardProps) => {
@@ -55,6 +60,20 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
   useEffect(() => {
     fetchAttempts();
   }, []);
+
+  // Subscribe to real-time updates
+  useRealTimeExamAttempts((updatedAttempt) => {
+    // Update attempts list when an attempt is updated
+    setAttempts(prev => {
+      const index = prev.findIndex(a => a.id === updatedAttempt.id);
+      if (index > -1) {
+        const updated = [...prev];
+        updated[index] = { ...updated[index], ...updatedAttempt };
+        return updated;
+      }
+      return prev;
+    });
+  }, { student_id: user.id });
 
   const fetchAttempts = async () => {
     try {
@@ -259,7 +278,8 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
                   "p-6 bg-gradient-card border-0 shadow-strong",
                   "hover:shadow-glow transition-all duration-300",
                   // Always show hover effects on mobile for better card distinction
-                  isMobile && "shadow-glow"
+                  isMobile && "shadow-glow",
+                  attempt.is_terminated && "border-l-4 border-red-500"
                 )}
               >
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -268,9 +288,11 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
                       <h3 className="text-lg font-semibold text-foreground">
                         {attempt.exam.title}
                       </h3>
-                      {/* Status icon based on score */}
+                      {/* Status icon based on score or termination */}
                       <div className="flex items-center gap-1">
-                        {(attempt.score || 0) >= 80 ? (
+                        {attempt.is_terminated ? (
+                          <AlertCircle className="w-4 h-4 text-destructive" />
+                        ) : (attempt.score || 0) >= 80 ? (
                           <CheckCircle className="w-4 h-4 text-success" />
                         ) : (attempt.score || 0) >= 60 ? (
                           <Target className="w-4 h-4 text-warning" />
@@ -279,7 +301,7 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
                         )}
                       </div>
                     </div>
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-2">
                       <div className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         {new Date(attempt.start_time).toLocaleDateString()}
@@ -293,17 +315,46 @@ const StudentDashboard = ({ user }: StudentDashboardProps) => {
                         {attempt.exam.language}
                       </div>
                     </div>
+
+                    {/* Termination Status */}
+                    {attempt.is_terminated && (
+                      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3 mt-2">
+                        <p className="text-xs font-semibold text-red-700 dark:text-red-400 mb-1 flex items-center gap-1">
+                          <AlertCircle className="w-3 h-3" />
+                          Exam Terminated
+                        </p>
+                        <p className="text-xs text-red-600 dark:text-red-300">
+                          {attempt.termination_reason || "Terminated due to rule violations"}
+                        </p>
+                        <p className="text-xs text-red-500 dark:text-red-400 mt-1 italic">
+                          Under review by teacher
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Failure Reason - Wrong Answers */}
+                    {!attempt.is_terminated && attempt.failure_reason === 'wrong_answers' && !attempt.passed && (
+                      <div className="bg-orange-50 dark:bg-orange-900/20 border border-orange-200 dark:border-orange-800 rounded-lg p-3 mt-2">
+                        <p className="text-xs font-semibold text-orange-700 dark:text-orange-400">
+                          Score Below Passing Threshold
+                        </p>
+                        <p className="text-xs text-orange-600 dark:text-orange-300 mt-1">
+                          Review and retake to improve your score
+                        </p>
+                      </div>
+                    )}
                   </div>
                   <div className="flex items-center gap-4">
                     <div className="text-center">
                       <p className="text-sm text-muted-foreground">Score</p>
                       <div className="flex items-center gap-2">
                         <div className={`w-3 h-3 rounded-full ${
+                          attempt.is_terminated ? 'bg-destructive' :
                           (attempt.score || 0) >= 80 ? 'bg-success' :
                           (attempt.score || 0) >= 60 ? 'bg-warning' : 'bg-destructive'
                         }`}></div>
                         <p className="text-lg font-bold text-foreground">
-                          {attempt.score}%
+                          {attempt.is_terminated ? '0' : attempt.score}%
                         </p>
                       </div>
                     </div>

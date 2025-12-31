@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { cn } from "@/lib/utils";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useRealTimeFlaggedAttempts, useRealTimeSecurityEvents } from "@/hooks/useRealTimeExam";
 import { AuthUser, signOut } from "@/lib/auth";
 import { useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
@@ -42,13 +43,36 @@ interface Exam {
 const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
+  const [flaggedAttempts, setFlaggedAttempts] = useState<any[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
 
   useEffect(() => {
     fetchExams();
+    fetchFlaggedAttempts();
   }, []);
+
+  // Subscribe to real-time flagged attempts
+  useRealTimeFlaggedAttempts((newFlaggedAttempt) => {
+    // Add new flagged attempt to the top of the list
+    setFlaggedAttempts(prev => {
+      // Check if already exists
+      if (prev.some(a => a.id === newFlaggedAttempt.id)) {
+        // Update existing
+        return prev.map(a => a.id === newFlaggedAttempt.id ? newFlaggedAttempt : a);
+      }
+      // Add new one at the top
+      return [newFlaggedAttempt, ...prev];
+    });
+
+    // Show toast notification
+    toast({
+      title: '🚨 New Flagged Attempt',
+      description: `A new suspicious attempt has been detected and flagged for review.`,
+      variant: 'destructive'
+    });
+  });
 
   const fetchExams = async () => {
     try {
@@ -109,6 +133,38 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchFlaggedAttempts = async () => {
+    try {
+      // Get all exams for this teacher
+      const { data: examsData, error: examsError } = await supabase
+        .from('exams')
+        .select('id')
+        .eq('teacher_id', user.id);
+
+      if (examsError) throw examsError;
+      if (!examsData || examsData.length === 0) return;
+
+      const examIds = examsData.map(e => e.id);
+
+      // Get flagged attempts for these exams
+      const { data: flaggedData, error: flaggedError } = await supabase
+        .from('exam_flagged_attempts')
+        .select(`
+          *,
+          exam:exams(id, title),
+          user:auth.users(email)
+        `)
+        .in('exam_id', examIds)
+        .eq('reviewed', false)
+        .order('created_at', { ascending: false });
+
+      if (flaggedError) throw flaggedError;
+      setFlaggedAttempts(flaggedData || []);
+    } catch (error) {
+      console.error('Error fetching flagged attempts:', error);
     }
   };
 
@@ -199,6 +255,74 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
         layout="two-up-one-down"
         className="mb-8"
       />
+
+      {/* Flagged Attempts Section */}
+      {flaggedAttempts.length > 0 && (
+        <div className="space-y-6 mb-8">
+          <div className="flex items-center justify-between">
+            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+              <span className="material-icons-round text-red-500">warning</span>
+              Flagged Attempts ({flaggedAttempts.length})
+            </h2>
+            <span className="text-xs font-medium bg-red-100 dark:bg-red-900/30 text-red-700 dark:text-red-400 px-3 py-1 rounded-full">
+              Requires Review
+            </span>
+          </div>
+
+          <div className="space-y-3">
+            {flaggedAttempts.slice(0, 5).map((attempt) => (
+              <Card key={attempt.id} className="p-4 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 shadow-none">
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-2">
+                      <h4 className="font-semibold text-red-900 dark:text-red-200">
+                        {attempt.exam?.title}
+                      </h4>
+                      <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                        attempt.risk_level === 'high' 
+                          ? 'bg-red-600 text-white'
+                          : 'bg-orange-600 text-white'
+                      }`}>
+                        {attempt.risk_level.toUpperCase()} RISK
+                      </span>
+                    </div>
+                    <p className="text-sm text-red-700 dark:text-red-300 mb-2">
+                      {attempt.analysis?.reason || attempt.analysis?.message || "Suspicious behavior detected"}
+                    </p>
+                    {attempt.flags && attempt.flags.length > 0 && (
+                      <div className="text-xs text-red-600 dark:text-red-400">
+                        <p className="font-medium mb-1">Violations:</p>
+                        <ul className="ml-4 space-y-0.5">
+                          {attempt.flags.slice(0, 3).map((flag: any, idx: number) => (
+                            <li key={idx}>• {flag.type?.replace(/-/g, ' ').toUpperCase()}</li>
+                          ))}
+                          {attempt.flags.length > 3 && <li>+{attempt.flags.length - 3} more</li>}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  <Button
+                    onClick={() => navigate(`/exam-results/${attempt.id}`)}
+                    variant="outline"
+                    size="sm"
+                    className="border-red-300 dark:border-red-700"
+                  >
+                    Review
+                  </Button>
+                </div>
+              </Card>
+            ))}
+          </div>
+          
+          {flaggedAttempts.length > 5 && (
+            <div className="text-center pt-2">
+              <p className="text-sm text-muted-foreground">
+                {flaggedAttempts.length - 5} more flagged attempts pending review
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Exams List */}
       <div className="space-y-6">

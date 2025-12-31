@@ -15,7 +15,12 @@ import {
   tabSwitchDetector,
   logExamAttemptDevice,
   randomizeExamQuestions,
-  fullScreenProtection
+  fullScreenProtection,
+  trackExamAttemptStart,
+  storeQuestionOrder,
+  logSecurityEvent,
+  updateExamAttemptStatus,
+  getTerminationMessage
 } from "@/lib/anti-cheating";
 import { examViolationTracker } from "@/lib/anti-cheating/violation-tracker";
 
@@ -67,6 +72,8 @@ const TakeExam = () => {
   const [examStarted, setExamStarted] = useState(false);
   const [showViolationWarning, setShowViolationWarning] = useState(false);
   const [lastViolationType, setLastViolationType] = useState<string>('');
+  const [showTerminationModal, setShowTerminationModal] = useState(false);
+  const [terminationMessage, setTerminationMessage] = useState<string>('');
 
   useEffect(() => {
     // Wait for auth to finish loading
@@ -108,11 +115,23 @@ const TakeExam = () => {
 
     // Fullscreen exit
     fullScreenProtection.config.onExit = () => {
+      if (attempt) {
+        logSecurityEvent(attempt.id, exam!.id, user!.id, {
+          event_type: 'fullscreen-exit',
+          severity: 'high'
+        });
+      }
       examViolationTracker.recordViolation('fullscreen-exit', 'Exited full-screen mode');
     };
 
     // Tab switch
     tabSwitchDetector.config.onViolation = () => {
+      if (attempt) {
+        logSecurityEvent(attempt.id, exam!.id, user!.id, {
+          event_type: 'tab-switch',
+          severity: 'high'
+        });
+      }
       examViolationTracker.recordViolation('tab-switch', 'Switched tabs');
     };
 
@@ -203,9 +222,22 @@ const TakeExam = () => {
       setExam(examData as Exam);
       setQuestions((questionsData || []) as Question[]);
 
-      // Randomize questions for anti-cheating
+      // Randomize questions for anti-cheating and track the order
       const randomized = randomizeExamQuestions((questionsData || []) as Question[], false);
       setRandomizedQuestions(randomized);
+
+      // Store question order in database
+      const questionIds = (questionsData || []).map((q: Question) => q.id);
+      const shuffledIds = randomized.map((q: Question) => q.id);
+      const orderMapping: Record<number, number> = {};
+      questionIds.forEach((id: string, origIndex: number) => {
+        const newIndex = shuffledIds.indexOf(id);
+        orderMapping[origIndex] = newIndex;
+      });
+
+      if (newAttempt) {
+        await storeQuestionOrder(newAttempt.id, examData.id, user!.id, questionIds, shuffledIds, orderMapping);
+      }
 
       // Set timer if exam has time limit
       if (examData.time_limit) {
@@ -214,6 +246,15 @@ const TakeExam = () => {
 
       // Mark exam as started to trigger anti-cheating initialization
       setExamStarted(true);
+
+      // Track exam attempt start with device info
+      await trackExamAttemptStart(newAttempt?.id || attempt?.id, examData.id, user!.id, {
+        userAgent: navigator.userAgent,
+        platform: navigator.platform,
+        screenResolution: `${window.screen.width}x${window.screen.height}`,
+        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+        language: navigator.language
+      });
 
       // Log device information for anti-cheating
       await logExamAttemptDevice(examData.id, user!.id, supabase);
@@ -270,45 +311,67 @@ const TakeExam = () => {
   };
 
   const handleExamTermination = async () => {
-    if (!attempt || !exam) return;
+    if (!attempt || !exam || !user) return;
 
     setIsSubmitting(true);
     const reason = examViolationTracker.getReason();
+    const violations = examViolationTracker.getViolations();
 
     try {
-      await supabase
-        .from('exam_attempts')
-        .update({
-          is_completed: true,
-          score: 0,
-          total_points: questions.reduce((sum, q) => sum + q.points, 0),
-          passed: false,
-          end_time: new Date().toISOString(),
-          answers: { __terminated: true, reason }
-        })
-        .eq('id', attempt.id);
+      // Update exam attempt with termination info
+      await updateExamAttemptStatus(attempt.id, {
+        is_completed: true,
+        score: 0,
+        total_points: questions.reduce((sum, q) => sum + q.points, 0),
+        passed: false,
+        end_time: new Date().toISOString(),
+        failure_reason: 'rules_violation',
+        is_terminated: true,
+        termination_reason: reason,
+        violation_details: {
+          violations,
+          rules_broken: violations.map((v: any) => v.type),
+          total_violations: violations.length
+        }
+      });
 
-      // Flag as violation
+      // Log violations to security_events table
+      for (const violation of violations) {
+        await logSecurityEvent(attempt.id, exam.id, user.id, {
+          event_type: violation.type as any,
+          event_details: { details: violation.details },
+          severity: 'high'
+        });
+      }
+
+      // Flag as high risk in exam_flagged_attempts
       await supabase
         .from('exam_flagged_attempts')
         .insert({
           exam_id: exam.id,
-          user_id: user!.id,
+          user_id: user.id,
           risk_level: 'high',
-          flags: examViolationTracker.getViolations(),
-          analysis: { reason, violations: examViolationTracker.getViolations() }
+          flags: violations,
+          analysis: {
+            reason,
+            violations,
+            message: `Exam terminated due to: ${reason}`
+          }
         })
-        .catch(err => console.warn('Could not log violation:', err));
+        .catch(err => console.warn('Could not log flagged attempt:', err));
 
       disableAntiCheating();
+
+      // Show termination modal
+      const message = `Your exam has been terminated due to the following: ${reason}. This exam will be reviewed by the teacher/exam creator and may affect your academic record.`;
+      setTerminationMessage(message);
+      setShowTerminationModal(true);
 
       toast({
         title: '❌ Exam Terminated',
         description: reason,
         variant: 'destructive'
       });
-
-      navigate(`/exam-results/${attempt.id}`);
     } catch (error) {
       console.error('Error terminating exam:', error);
     } finally {
@@ -671,6 +734,45 @@ const TakeExam = () => {
           </div>
         </footer>
       </div>
+
+      {/* Termination Modal */}
+      {showTerminationModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+          <Card className="w-full max-w-md bg-white rounded-3xl shadow-2xl border-0">
+            <div className="p-6 border-b border-red-200">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="w-12 h-12 rounded-full bg-red-100 flex items-center justify-center">
+                  <span className="text-2xl">⚠️</span>
+                </div>
+                <h2 className="text-2xl font-bold text-red-600">Exam Terminated</h2>
+              </div>
+            </div>
+            <div className="p-6">
+              <p className="text-gray-700 leading-relaxed mb-4">{terminationMessage}</p>
+              <div className="bg-red-50 rounded-xl p-4 mb-6 border border-red-200">
+                <p className="text-sm text-red-700 font-medium">
+                  <strong>What happens next:</strong>
+                </p>
+                <ul className="text-sm text-red-600 mt-2 space-y-1 ml-4">
+                  <li>• Your exam has been automatically failed</li>
+                  <li>• This attempt is flagged for teacher review</li>
+                  <li>• The teacher will see all violations and details</li>
+                  <li>• This may affect your final grade</li>
+                </ul>
+              </div>
+              <Button
+                onClick={() => {
+                  setShowTerminationModal(false);
+                  navigate(`/exam-results/${attempt?.id}`);
+                }}
+                className="w-full py-3 bg-red-600 hover:bg-red-700 text-white font-semibold rounded-lg transition-all"
+              >
+                Continue to Results
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
     </div>
   );
 };

@@ -78,6 +78,20 @@ import {
   ExamViolationTracker
 } from './violation-tracker';
 
+// Database Tracker
+import {
+  trackExamAttemptStart,
+  storeQuestionOrder,
+  logSecurityEvent,
+  updateExamAttemptStatus,
+  getFlaggedAttemptsForTeacher,
+  getSecurityEventsForAttempt,
+  getAttemptAnalytics,
+  isAttemptTerminated,
+  getTerminationMessage,
+  getFailureReason
+} from './database-tracker';
+
 // Export everything
 export {
   copyPasteProtection,
@@ -110,7 +124,17 @@ export {
   suspiciousBehaviorDetector,
   SuspiciousBehaviorDetector,
   examViolationTracker,
-  ExamViolationTracker
+  ExamViolationTracker,
+  trackExamAttemptStart,
+  storeQuestionOrder,
+  logSecurityEvent,
+  updateExamAttemptStatus,
+  getFlaggedAttemptsForTeacher,
+  getSecurityEventsForAttempt,
+  getAttemptAnalytics,
+  isAttemptTerminated,
+  getTerminationMessage,
+  getFailureReason
 };
 
 /**

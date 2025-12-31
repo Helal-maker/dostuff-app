@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { getAttemptAnalytics, isAttemptTerminated, getTerminationMessage, getFailureReason } from "@/lib/anti-cheating";
 
 interface ExamResult {
   id: string;
@@ -14,6 +15,10 @@ interface ExamResult {
   start_time: string;
   end_time: string | null;
   answers?: any;
+  is_terminated?: boolean;
+  termination_reason?: string;
+  violation_details?: any;
+  failure_reason?: string;
   exam: {
     id: string;
     title: string;
@@ -30,6 +35,8 @@ const ExamResults = () => {
   const [result, setResult] = useState<ExamResult | null>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [analytics, setAnalytics] = useState<any>(null);
+  const [securityEvents, setSecurityEvents] = useState<any[]>([]);
 
   useEffect(() => {
     if (authLoading) return;
@@ -53,6 +60,10 @@ const ExamResults = () => {
           passed,
           start_time,
           end_time,
+          is_terminated,
+          termination_reason,
+          violation_details,
+          failure_reason,
           exam:exams (
             id,
             title,
@@ -72,6 +83,12 @@ const ExamResults = () => {
       }
 
       setResult(data as unknown as ExamResult);
+
+      // Load attempt analytics (security events, device logs, etc.)
+      const analyticsData = await getAttemptAnalytics(attemptId!);
+      setAnalytics(analyticsData);
+      setSecurityEvents(analyticsData.securityEvents || []);
+
       // fetch questions for review
       try {
         if (data.exam && typeof data.exam === 'object' && 'id' in data.exam) {
@@ -242,6 +259,74 @@ const ExamResults = () => {
 
           {/* Divider */}
           <div className="w-full h-px bg-slate-100 dark:bg-slate-700/50 my-2"></div>
+
+          {/* Failure/Violation Reason Section */}
+          {result?.is_terminated && (
+            <div className="w-full bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl mt-1">⚠️</span>
+                <div className="flex-1">
+                  <h4 className="font-bold text-red-700 dark:text-red-400 mb-2">Exam Terminated</h4>
+                  <p className="text-sm text-red-600 dark:text-red-300 mb-3">
+                    {result.termination_reason || "Exam was terminated due to rule violations"}
+                  </p>
+                  {result.violation_details?.rules_broken && (
+                    <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 mt-2">
+                      <p className="text-xs font-semibold text-red-700 dark:text-red-400 mb-2">Rules Broken:</p>
+                      <ul className="space-y-1">
+                        {result.violation_details.rules_broken.map((rule: string, idx: number) => (
+                          <li key={idx} className="text-xs text-red-600 dark:text-red-300 flex items-center">
+                            <span className="material-icons-round text-sm mr-2">close</span>
+                            {rule.replace(/-/g, ' ').toUpperCase()}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  <p className="text-xs text-red-600 dark:text-red-300 mt-3 italic">
+                    This exam will be reviewed by your teacher and may affect your grade.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Failure Reason - Wrong Answers */}
+          {!result?.is_terminated && result?.failure_reason === 'wrong_answers' && !result?.passed && (
+            <div className="w-full bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-800 rounded-xl p-4 mb-4">
+              <div className="flex items-start gap-3">
+                <span className="text-2xl">📚</span>
+                <div className="flex-1">
+                  <h4 className="font-bold text-orange-700 dark:text-orange-400 mb-1">Score Below Passing Threshold</h4>
+                  <p className="text-sm text-orange-600 dark:text-orange-300">
+                    You need {result.exam.pass_threshold}% to pass. Review the questions you answered incorrectly to improve.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Security Events Display */}
+          {securityEvents && securityEvents.length > 0 && (
+            <div className="w-full bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
+              <h4 className="font-bold text-blue-700 dark:text-blue-400 mb-3 flex items-center">
+                <span className="material-icons-round mr-2">security</span>
+                Security Events ({securityEvents.length})
+              </h4>
+              <div className="space-y-2 max-h-32 overflow-y-auto">
+                {securityEvents.map((event: any, idx: number) => (
+                  <div key={idx} className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-2 text-xs">
+                    <p className="font-medium text-blue-700 dark:text-blue-300">
+                      {event.event_type.replace(/-/g, ' ').toUpperCase()}
+                    </p>
+                    <p className="text-blue-600 dark:text-blue-400 text-xs">
+                      {new Date(event.timestamp).toLocaleTimeString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Review Section */}
           <div className="w-full text-left pb-4">
