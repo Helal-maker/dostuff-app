@@ -11,13 +11,13 @@ import {
   initializeAntiCheating,
   disableAntiCheating,
   questionTimeTracker,
-  examAttemptLimiter,
   suspiciousBehaviorDetector,
   tabSwitchDetector,
   logExamAttemptDevice,
   randomizeExamQuestions,
-  verifyRandomizedAnswer
+  fullScreenProtection
 } from "@/lib/anti-cheating";
+import { examViolationTracker } from "@/lib/anti-cheating/violation-tracker";
 
 interface Exam {
   id: string;
@@ -65,7 +65,8 @@ const TakeExam = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [examStarted, setExamStarted] = useState(false);
-  const [suspiciousActivities, setSuspiciousActivities] = useState<any[]>([]);
+  const [showViolationWarning, setShowViolationWarning] = useState(false);
+  const [lastViolationType, setLastViolationType] = useState<string>('');
 
   useEffect(() => {
     // Wait for auth to finish loading
@@ -82,33 +83,44 @@ const TakeExam = () => {
     // Initialize anti-cheating features when exam starts
     if (!examStarted || !exam || !user) return;
 
-    // Enable all anti-cheating protections
     initializeAntiCheating({
       copyPasteProtection: true,
       fullScreenMode: true,
       rightClickDisabled: true,
-      randomizeQuestions: false, // Already done in loadExam
-      trackQuestionTime: true,
       detectTabSwitch: true,
       browserLock: true
     });
 
-    // Start question timer for first question
+    // Setup violation handlers
+    examViolationTracker.config.onFirstViolation = (v) => {
+      setLastViolationType(v.type);
+      setShowViolationWarning(true);
+      toast({
+        title: '⚠️ Warning',
+        description: `Violation detected: ${v.type}. One more violation will fail the exam.`,
+        variant: 'destructive'
+      });
+    };
+
+    examViolationTracker.config.onSecondViolation = () => {
+      handleExamTermination();
+    };
+
+    // Fullscreen exit
+    fullScreenProtection.config.onExit = () => {
+      examViolationTracker.recordViolation('fullscreen-exit', 'Exited full-screen mode');
+    };
+
+    // Tab switch
+    tabSwitchDetector.config.onViolation = () => {
+      examViolationTracker.recordViolation('tab-switch', 'Switched tabs');
+    };
+
     if (randomizedQuestions.length > 0) {
       questionTimeTracker.startQuestion(randomizedQuestions[currentQuestionIndex].id);
     }
 
-    // Setup tab switch violation callback
-    tabSwitchDetector.config.onViolation = (violation: any) => {
-      setSuspiciousActivities(prev => [...prev, {
-        type: 'tab-switch',
-        timestamp: violation.timestamp,
-        details: violation
-      }]);
-    };
-
     return () => {
-      // Cleanup on unmount
       disableAntiCheating();
     };
   }, [examStarted, exam, user]);
@@ -235,12 +247,10 @@ const TakeExam = () => {
 
   const handleNavigatePrevious = () => {
     if (currentQuestionIndex > 0) {
-      // End timer for current question
       if (randomizedQuestions.length > 0) {
         questionTimeTracker.endQuestion(randomizedQuestions[currentQuestionIndex].id);
       }
       setCurrentQuestionIndex(currentQuestionIndex - 1);
-      // Start timer for new question
       if (randomizedQuestions.length > 0) {
         questionTimeTracker.startQuestion(randomizedQuestions[currentQuestionIndex - 1].id);
       }
@@ -249,15 +259,60 @@ const TakeExam = () => {
 
   const handleNavigateNext = () => {
     if (currentQuestionIndex < questions.length - 1) {
-      // End timer for current question
       if (randomizedQuestions.length > 0) {
         questionTimeTracker.endQuestion(randomizedQuestions[currentQuestionIndex].id);
       }
       setCurrentQuestionIndex(currentQuestionIndex + 1);
-      // Start timer for new question
       if (randomizedQuestions.length > 0) {
         questionTimeTracker.startQuestion(randomizedQuestions[currentQuestionIndex + 1].id);
       }
+    }
+  };
+
+  const handleExamTermination = async () => {
+    if (!attempt || !exam) return;
+
+    setIsSubmitting(true);
+    const reason = examViolationTracker.getReason();
+
+    try {
+      await supabase
+        .from('exam_attempts')
+        .update({
+          is_completed: true,
+          score: 0,
+          total_points: questions.reduce((sum, q) => sum + q.points, 0),
+          passed: false,
+          end_time: new Date().toISOString(),
+          answers: { __terminated: true, reason }
+        })
+        .eq('id', attempt.id);
+
+      // Flag as violation
+      await supabase
+        .from('exam_flagged_attempts')
+        .insert({
+          exam_id: exam.id,
+          user_id: user!.id,
+          risk_level: 'high',
+          flags: examViolationTracker.getViolations(),
+          analysis: { reason, violations: examViolationTracker.getViolations() }
+        })
+        .catch(err => console.warn('Could not log violation:', err));
+
+      disableAntiCheating();
+
+      toast({
+        title: '❌ Exam Terminated',
+        description: reason,
+        variant: 'destructive'
+      });
+
+      navigate(`/exam-results/${attempt.id}`);
+    } catch (error) {
+      console.error('Error terminating exam:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -468,13 +523,52 @@ const TakeExam = () => {
     return null;
   }
 
+  // Check for termination
+  if (examViolationTracker.shouldTerminate() && !isSubmitting) {
+    handleExamTermination();
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-violet-600 via-purple-600 to-pink-600 flex items-center justify-center p-4">
+        <Card className="p-8 bg-white/10 backdrop-blur-md border-white/20 rounded-3xl shadow-2xl text-center max-w-md">
+          <div className="w-16 h-16 text-red-400 mx-auto mb-4">
+            <span className="material-icons-round text-4xl">block</span>
+          </div>
+          <h2 className="text-xl font-semibold text-white mb-2">Exam Terminated</h2>
+          <p className="text-white/80 mb-6">{examViolationTracker.getReason()}</p>
+          <p className="text-yellow-300 text-sm">Submitting exam...</p>
+        </Card>
+      </div>
+    );
+  }
+
   const progress = ((currentQuestionIndex + 1) / questions.length) * 100;
-  // Use randomized questions if available, otherwise use regular questions
   const displayQuestions = randomizedQuestions.length > 0 ? randomizedQuestions : questions;
   const currentQuestion = displayQuestions[currentQuestionIndex];
 
   return (
     <div className="bg-gradient-to-br from-violet-600 via-purple-600 to-pink-600 min-h-screen text-white">
+      {/* Violation Warning Modal */}
+      {showViolationWarning && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <Card className="bg-red-600/95 border-red-400 rounded-3xl shadow-2xl max-w-sm p-6">
+            <div className="text-center">
+              <div className="w-16 h-16 bg-red-400/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <span className="material-icons-round text-yellow-300 text-4xl">warning</span>
+              </div>
+              <h3 className="text-2xl font-bold text-white mb-2">⚠️ Warning</h3>
+              <p className="text-white/90 mb-6">
+                You exited full-screen or switched tabs. <strong>One more violation will terminate your exam.</strong>
+              </p>
+              <Button
+                onClick={() => setShowViolationWarning(false)}
+                className="bg-white text-red-600 hover:bg-white/90 font-bold py-3 px-6 rounded-xl transition-all active:scale-95"
+              >
+                Continue Exam
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
+
       <div className="max-w-md mx-auto flex flex-col min-h-screen">
         {/* Header */}
         <header className="px-6 pt-8 pb-4">

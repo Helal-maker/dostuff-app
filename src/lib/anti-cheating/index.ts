@@ -62,8 +62,6 @@ import {
 
 // Browser Lock
 import {
-  warnBeforeLeaving,
-  redirectOnClose,
   browserLock,
   BrowserLock
 } from './browser-lock';
@@ -73,6 +71,12 @@ import {
   suspiciousBehaviorDetector,
   SuspiciousBehaviorDetector
 } from './suspicious-behavior-detector';
+
+// Exam Violation Tracker
+import {
+  examViolationTracker,
+  ExamViolationTracker
+} from './violation-tracker';
 
 // Export everything
 export {
@@ -101,40 +105,22 @@ export {
   logExamAttemptDevice,
   checkSuspiciousDeviceActivity,
   DeviceTracker,
-  warnBeforeLeaving,
-  redirectOnClose,
   browserLock,
   BrowserLock,
   suspiciousBehaviorDetector,
-  SuspiciousBehaviorDetector
+  SuspiciousBehaviorDetector,
+  examViolationTracker,
+  ExamViolationTracker
 };
-
-/**
- * Unified Anti-Cheating Configuration
- * Initialize all anti-cheating measures at once
- */
-export interface AntiCheatingConfig {
-  copyPasteProtection?: boolean;
-  fullScreenMode?: boolean;
-  rightClickDisabled?: boolean;
-  randomizeQuestions?: boolean;
-  trackQuestionTime?: boolean;
-  limitAttempts?: number;
-  detectTabSwitch?: boolean;
-  trackDevice?: boolean;
-  browserLock?: boolean;
-  detectSuspiciousBehavior?: boolean;
-}
 
 /**
  * Initialize anti-cheating features
  */
-export function initializeAntiCheating(config: AntiCheatingConfig = {}) {
+export function initializeAntiCheating(config: any = {}) {
   const {
     copyPasteProtection: enableCopyPaste = true,
     fullScreenMode = true,
     rightClickDisabled = true,
-    limitAttempts = 3,
     detectTabSwitch = true,
     browserLock: enableBrowserLock = true
   } = config;
@@ -160,18 +146,11 @@ export function initializeAntiCheating(config: AntiCheatingConfig = {}) {
     browserLock.enable();
   }
 
-  console.log('✅ Anti-cheating features initialized', {
-    copyPaste: enableCopyPaste,
-    fullScreen: fullScreenMode,
-    rightClick: rightClickDisabled,
-    tabSwitch: detectTabSwitch,
-    browserLock: enableBrowserLock
-  });
+  console.log('✅ Anti-cheating features initialized');
 }
 
 /**
  * Disable all anti-cheating features
- * Useful for cleanup after exam completion
  */
 export function disableAntiCheating() {
   copyPasteProtection.disable();
