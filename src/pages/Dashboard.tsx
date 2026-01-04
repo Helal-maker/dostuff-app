@@ -346,7 +346,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Stunning Performance Timeline */}
+      {/* Performance Trend Chart */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <div className="lg:col-span-2 bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden group">
           <div className="absolute top-0 right-0 p-8 opacity-5">
@@ -355,8 +355,8 @@ const Dashboard = () => {
           
           <div className="flex items-center justify-between mb-10 relative z-10">
             <div>
-              <h3 className="text-xl font-black text-gray-900">Success Analytics</h3>
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Weekly Mastery Score</p>
+              <h3 className="text-xl font-black text-gray-900">Performance Trend</h3>
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Track your performance progression over time</p>
             </div>
             <div className="flex space-x-2">
                <button className="px-4 py-1.5 bg-gray-50 text-gray-400 text-[10px] font-black rounded-lg hover:bg-[#7C3AED]/10 hover:text-[#7C3AED] transition-all">Last 7 Days</button>
@@ -379,11 +379,6 @@ const Dashboard = () => {
                     <stop offset="50%" stopColor="#EAB308" stopOpacity={0.2}/>
                     <stop offset="100%" stopColor="#22C55E" stopOpacity={0.2}/>
                   </linearGradient>
-
-                  <linearGradient id="avgColor" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#c7d2fe" stopOpacity={0.2}/>
-                    <stop offset="95%" stopColor="#c7d2fe" stopOpacity={0}/>
-                  </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="5 5" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 11, fontWeight: 700, fill: '#cbd5e1'}} dy={10} />
@@ -393,7 +388,6 @@ const Dashboard = () => {
                   itemStyle={{ fontWeight: 800, fontSize: '12px' }}
                   labelStyle={{ fontWeight: 900, marginBottom: '5px', color: '#1e293b' }}
                 />
-                <Area type="monotone" dataKey="classAvg" stroke="#c7d2fe" strokeWidth={2} fillOpacity={1} fill="url(#avgColor)" />
                 <Area 
                   type="monotone" 
                   dataKey="score" 
@@ -406,6 +400,27 @@ const Dashboard = () => {
                 />
               </AreaChart>
             </ResponsiveContainer>
+          </div>
+          <div className="mt-4 text-center relative z-10">
+            <p className="text-sm text-gray-600">
+              {chartData.length >= 2 && (
+                <>
+                  {chartData[chartData.length - 1].score > chartData[0].score ? (
+                    <span className="text-green-600 font-medium">
+                      ↗ Improved by {chartData[chartData.length - 1].score - chartData[0].score} points
+                    </span>
+                  ) : chartData[chartData.length - 1].score < chartData[0].score ? (
+                    <span className="text-red-600 font-medium">
+                      ↘ Declined by {chartData[0].score - chartData[chartData.length - 1].score} points
+                    </span>
+                  ) : (
+                    <span className="text-blue-600 font-medium">
+                      → Consistent performance
+                    </span>
+                  )}
+                </>
+              )}
+            </p>
           </div>
         </div>
 

@@ -35,6 +35,9 @@ import {
   CartesianGrid,
   ResponsiveContainer,
   ReferenceLine,
+  AreaChart,
+  Area,
+  Tooltip,
 } from "recharts";
 import {
   Calendar,
@@ -59,7 +62,9 @@ import {
   Printer,
   ArrowRight,
   ShieldCheck,
+  Activity,
 } from "lucide-react";
+import ExportModal from "@/components/ExportModal";
 
 interface ExamAttempt {
   id: string;
@@ -105,6 +110,7 @@ const Results = () => {
     min: Number(searchParams.get("minScore") || 0),
     max: Number(searchParams.get("maxScore") || 100),
   });
+  const [isExportModalOpen, setIsExportModalOpen] = useState(false);
 
   useEffect(() => {
     if (authLoading) return;
@@ -288,39 +294,8 @@ const Results = () => {
     return "#3b82f6"; // Blue for stable
   };
 
-  const handleExport = async () => {
-    try {
-      // Export functionality preserved from original
-      const csvContent = [
-        ['Exam Title', 'Score', 'Status', 'Date Completed', 'Time Taken'],
-        ...filteredAttempts.map(attempt => [
-          attempt.exam.title,
-          `${attempt.score}%`,
-          getStatusText(attempt),
-          new Date(attempt.end_time).toLocaleDateString(),
-          getTimeTaken(attempt.start_time, attempt.end_time)
-        ])
-      ].map(row => row.join(',')).join('\n');
-
-      const blob = new Blob([csvContent], { type: 'text/csv' });
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `exam-results-${new Date().toISOString().split('T')[0]}.csv`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-
-      toast({
-        title: "Export Successful",
-        description: "Results exported to CSV file",
-      });
-    } catch (error) {
-      toast({
-        title: "Export Failed",
-        description: "Failed to export results",
-        variant: "destructive",
-      });
-    }
+  const handleExportClick = () => {
+    setIsExportModalOpen(true);
   };
 
   const handleShare = () => {
@@ -351,6 +326,63 @@ const Results = () => {
   const distinctionAttempts = attempts.filter(a => a.distinction).length;
   const averageScore = attempts.length > 0 ? Math.round(attempts.reduce((sum, a) => sum + a.score, 0) / attempts.length) : 0;
   const passRate = totalAttempts > 0 ? Math.round((passedAttempts / totalAttempts) * 100) : 0;
+
+  // Process exam data for calendar heatmap
+  const processExamData = () => {
+    // Detect if user is teacher (you might want to get this from user profile)
+    const isTeacher = user?.user_metadata?.role === 'teacher' || user?.app_metadata?.role === 'teacher';
+    
+    // Group attempts by date (for students) or by exam creation date (for teachers)
+    const examCountsByDate = new Map();
+    
+    if (isTeacher) {
+      // For teachers: group by exam creation date
+      // Note: This would need to be fetched from the exams table with creation dates
+      // For now, using end_time as a placeholder - in real implementation, fetch from exams table
+      attempts.forEach(attempt => {
+        const date = new Date(attempt.end_time).toDateString(); // Placeholder - should be exam creation date
+        examCountsByDate.set(date, (examCountsByDate.get(date) || 0) + 1);
+      });
+    } else {
+      // For students: group by exam completion date
+      attempts.forEach(attempt => {
+        const date = new Date(attempt.end_time).toDateString();
+        examCountsByDate.set(date, (examCountsByDate.get(date) || 0) + 1);
+      });
+    }
+
+    // Get the date range for the last 100 days
+    const today = new Date();
+    const dates = [];
+    for (let i = 99; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(date.getDate() - i);
+      dates.push(date.toDateString());
+    }
+
+    // Find max exams per day for opacity scaling
+    const maxExamsPerDay = Math.max(...Array.from(examCountsByDate.values()), 1);
+    
+    // Create exam data array for the grid
+    const examData = dates.map(dateString => {
+      const examCount = examCountsByDate.get(dateString) || 0;
+      const date = new Date(dateString);
+      const isToday = dateString === today.toDateString();
+      
+      return {
+        date,
+        examCount,
+        isToday,
+        hasExams: examCount > 0,
+        opacity: examCount > 0 ? 0.4 + (examCount / maxExamsPerDay) * 0.6 : 0.3
+      };
+    });
+
+    return { examData, isTeacher };
+  };
+
+  const { examData, isTeacher } = processExamData();
+  const todayData = examData.find(d => d.isToday);
 
   const chartConfig = {
     score: {
@@ -448,7 +480,7 @@ const Results = () => {
                 </div>
              </div>
 
-             {/* Performance Heat Map Chart - Based on average score */}
+             {/* Exam Calendar Heatmap - Shows actual exam activity */}
              <div className="flex flex-col items-center justify-center flex-1 py-4">
                 {/* 10x10 Heatmap Grid Container */}
                 <div className="p-4 md:p-5 bg-slate-50 rounded-[2rem] border border-slate-100 mb-8 shadow-inner relative overflow-hidden group">
@@ -457,7 +489,7 @@ const Results = () => {
                   
                   {/* Grid - Adjusted sizes for Tablet (md) vs Desktop (lg/xl) */}
                   <div className="grid grid-cols-10 gap-2 md:gap-1.5 lg:gap-2 xl:gap-2.5">
-                    {Array.from({ length: 100 }).map((_, i) => (
+                    {examData.map((dayData, i) => (
                       <div 
                         key={i} 
                         className={`
@@ -468,17 +500,45 @@ const Results = () => {
                           xl:w-5 xl:h-5 
                           rounded-[3px] lg:rounded-[4px] 
                           transition-all duration-700 ease-out 
-                          ${i < averageScore 
-                            ? 'bg-[#10B981] shadow-[0_1px_2px_rgba(16,185,129,0.3)]' 
-                            : 'bg-slate-200'}
+                          ${dayData.isToday 
+                            ? 'bg-gradient-to-br from-pink-400 via-pink-500 to-pink-600 shadow-[0_8px_25px_rgba(236,72,153,0.4),0_4px_12px_rgba(236,72,153,0.3)] ring-2 ring-pink-300 ring-offset-1 ring-offset-white'
+                            : dayData.hasExams 
+                              ? 'bg-[#10B981] shadow-[0_4px_12px_rgba(16,185,129,0.25),0_2px_6px_rgba(16,185,129,0.2)]' 
+                              : 'bg-slate-200 shadow-[0_2px_4px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.06)]'}
                         `}
                         style={{ 
-                          opacity: i < averageScore ? 0.3 + (i / 100) * 0.7 : 0.5,
-                          transform: i < averageScore ? 'scale(1)' : 'scale(0.85)'
+                          opacity: dayData.isToday ? 1 : dayData.opacity,
+                          transform: dayData.hasExams || dayData.isToday ? 'scale(1.05)' : 'scale(0.85)'
                         }}
-                        title={`Point ${i + 1}`}
+                        title={`${dayData.date.toLocaleDateString()}${dayData.hasExams ? ` - ${dayData.examCount} exam${dayData.examCount > 1 ? 's' : ''}` : ' - No exams'}`}
                       />
                     ))}
+                  </div>
+                  
+                  {/* Premium Info Section - Shows when user hovers over the grid */}
+                  <div className="mt-6 p-5 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 border border-slate-700 rounded-2xl shadow-[0_20px_40px_rgba(0,0,0,0.3),0_8px_16px_rgba(0,0,0,0.2)] backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-all duration-500 transform group-hover:translate-y-0 translate-y-2">
+                    <div className="text-sm">
+                      <div className="flex items-center gap-2 mb-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
+                          <Calendar className="w-4 h-4 text-white" />
+                        </div>
+                        <p className="font-bold text-white text-base">📊 {isTeacher ? 'Exam Creation' : 'Exam Activity'} Calendar</p>
+                      </div>
+                      <div className="space-y-2 text-slate-300">
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-[#10B981] rounded shadow-md"></div>
+                          <span className="text-xs">{isTeacher ? 'Days creating exams' : 'Days taking exams'} (darker = more active)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-gradient-to-br from-pink-400 to-pink-600 rounded shadow-lg"></div>
+                          <span className="text-xs">Today (premium pink highlight)</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-3 h-3 bg-slate-200 rounded shadow-sm"></div>
+                          <span className="text-xs">Days without activity</span>
+                        </div>
+                      </div>
+                    </div>
                   </div>
                 </div>
 
@@ -519,7 +579,7 @@ const Results = () => {
                   <span>Share</span>
                 </button>
                 <button 
-                  onClick={handleExport}
+                  onClick={handleExportClick}
                   className="flex-1 py-4 rounded-2xl border-2 border-gray-100 text-gray-500 text-[10px] font-black uppercase tracking-widest hover:bg-gray-50 hover:text-gray-900 hover:border-gray-200 transition-all flex items-center justify-center space-x-2"
                 >
                   <Printer size={14} />
@@ -610,113 +670,104 @@ const Results = () => {
 
           {/* Performance Trend Chart */}
           {performanceTrend.length > 1 && (
-            <Card className="mb-8 bg-gradient-to-br from-slate-50 to-blue-50 border-0 shadow-lg">
-              <CardHeader className="p-6">
-                <CardTitle className="text-2xl font-bold text-gray-800 flex items-center gap-3">
-                  <div className="p-2 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg">
-                    <TrendingUp className="w-6 h-6 text-white" />
-                  </div>
-                  Performance Trend
-                </CardTitle>
-                <CardDescription className="text-gray-600">
-                  Track your performance progression over time
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="p-6 pt-0">
-                <div className="h-64 sm:h-72 md:h-80">
-                  <ChartContainer config={chartConfig} className="w-full h-full mobile-chart">
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart
-                        data={performanceTrend}
-                        margin={{
-                          top: 10,
-                          right: 20,
-                          left: 15,
-                          bottom: 5,
-                        }}
-                      >
-                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                        <XAxis
-                          dataKey="date"
-                          className="text-muted-foreground"
-                          tick={{ fontSize: 10 }}
-                          interval="preserveStartEnd"
-                        />
-                        <YAxis
-                          domain={[0, 100]}
-                          className="text-muted-foreground"
-                          tick={{ fontSize: 10 }}
-                        />
-                        <ChartTooltip
-                          content={({ active, payload, label }) => {
-                            if (active && payload && payload.length) {
-                              const data = payload[0].payload as PerformanceTrendData;
-                              return (
-                                <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg p-3 shadow-lg">
-                                  <p className="font-semibold text-gray-800">{data.exam_title}</p>
-                                  <p className="text-sm text-gray-600">{label}</p>
-                                  <p className="text-sm">
-                                    Score: <span className="font-semibold">{data.score}%</span>
-                                  </p>
-                                  <p className="text-sm">
-                                    Status: <span className={`font-semibold ${
-                                      data.status === "distinction" ? "text-yellow-600" :
-                                      data.status === "pass" ? "text-green-600" : "text-red-600"
-                                    }`}>
-                                      {data.status.charAt(0).toUpperCase() + data.status.slice(1)}
-                                    </span>
-                                  </p>
-                                </div>
-                              );
-                            }
-                            return null;
-                          }}
-                        />
-                        <ReferenceLine y={70} stroke="#94a3b8" strokeDasharray="2 2" />
-                        <Line
-                          type="monotone"
-                          dataKey="score"
-                          stroke={getTrendLineColor(performanceTrend)}
-                          strokeWidth={2}
-                          dot={{
-                            fill: getTrendLineColor(performanceTrend),
-                            strokeWidth: 1,
-                            r: 3,
-                          }}
-                          activeDot={{
-                            r: 5,
-                            stroke: getTrendLineColor(performanceTrend),
-                            strokeWidth: 1,
-                            fill: "white"
-                          }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  </ChartContainer>
+            <div className="bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden group mb-8">
+              <div className="absolute top-0 right-0 p-8 opacity-5">
+                <Activity size={120} className="text-[#7C3AED]" />
+              </div>
+              
+              <div className="flex items-center justify-between mb-10 relative z-10">
+                <div>
+                  <h3 className="text-xl font-black text-gray-900">Performance Trend</h3>
+                  <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Track your performance progression over time</p>
                 </div>
-                <div className="mt-4 text-center">
-                  <p className="text-sm text-gray-600">
-                    {performanceTrend.length >= 2 && (
-                      <>
-                        {performanceTrend[performanceTrend.length - 1].score > performanceTrend[0].score ? (
-                          <span className="text-green-600 font-medium">
-                            ↗ Improved by {performanceTrend[performanceTrend.length - 1].score - performanceTrend[0].score} points
-                          </span>
-                        ) : performanceTrend[performanceTrend.length - 1].score < performanceTrend[0].score ? (
-                          <span className="text-red-600 font-medium">
-                            ↘ Declined by {performanceTrend[0].score - performanceTrend[performanceTrend.length - 1].score} points
-                          </span>
-                        ) : (
-                          <span className="text-blue-600 font-medium">
-                            → Consistent performance
-                          </span>
-                        )}
-                      </>
-                    )}
-                  </p>
+                <div className="flex space-x-2">
+                  <button className="px-4 py-1.5 bg-gray-50 text-gray-400 text-[10px] font-black rounded-lg hover:bg-[#7C3AED]/10 hover:text-[#7C3AED] transition-all">Last 7 Days</button>
+                  <button className="px-4 py-1.5 bg-gray-50 text-gray-400 text-[10px] font-black rounded-lg hover:bg-[#7C3AED]/10 hover:text-[#7C3AED] transition-all">Last Month</button>
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+
+              <div className="h-72 w-full relative z-10">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={performanceTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="performanceGradient" x1="0" y1="1" x2="0" y2="0">
+                        <stop offset="0%" stopColor="#EF4444" stopOpacity={1}/>
+                        <stop offset="50%" stopColor="#EAB308" stopOpacity={1}/>
+                        <stop offset="100%" stopColor="#22C55E" stopOpacity={1}/>
+                      </linearGradient>
+                      
+                      <linearGradient id="performanceFill" x1="0" y1="1" x2="0" y2="0">
+                        <stop offset="0%" stopColor="#EF4444" stopOpacity={0.2}/>
+                        <stop offset="50%" stopColor="#EAB308" stopOpacity={0.2}/>
+                        <stop offset="100%" stopColor="#22C55E" stopOpacity={0.2}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="5 5" vertical={false} stroke="#f1f5f9" />
+                    <XAxis dataKey="date" axisLine={false} tickLine={false} tick={{fontSize: 11, fontWeight: 700, fill: '#cbd5e1'}} dy={10} />
+                    <YAxis axisLine={false} tickLine={false} tick={{fontSize: 11, fontWeight: 700, fill: '#cbd5e1'}} />
+                    <Tooltip 
+                      contentStyle={{ border: 'none', borderRadius: '20px', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', padding: '15px' }}
+                      itemStyle={{ fontWeight: 800, fontSize: '12px' }}
+                      labelStyle={{ fontWeight: 900, marginBottom: '5px', color: '#1e293b' }}
+                      content={({ active, payload, label }) => {
+                        if (active && payload && payload.length) {
+                          const data = payload[0].payload as PerformanceTrendData;
+                          return (
+                            <div className="bg-white/95 backdrop-blur-sm border border-gray-200 rounded-lg p-3 shadow-lg">
+                              <p className="font-semibold text-gray-800">{data.exam_title}</p>
+                              <p className="text-sm text-gray-600">{label}</p>
+                              <p className="text-sm">
+                                Score: <span className="font-semibold">{data.score}%</span>
+                              </p>
+                              <p className="text-sm">
+                                Status: <span className={`font-semibold ${
+                                  data.status === "distinction" ? "text-yellow-600" :
+                                  data.status === "pass" ? "text-green-600" : "text-red-600"
+                                }`}>
+                                  {data.status.charAt(0).toUpperCase() + data.status.slice(1)}
+                                </span>
+                              </p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="score" 
+                      stroke="url(#performanceGradient)" 
+                      strokeWidth={4} 
+                      fillOpacity={1} 
+                      fill="url(#performanceFill)" 
+                      dot={{ r: 6, fill: 'url(#performanceGradient)', strokeWidth: 3, stroke: '#fff' }} 
+                      activeDot={{ r: 8, strokeWidth: 4 }} 
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-4 text-center relative z-10">
+                <p className="text-sm text-gray-600">
+                  {performanceTrend.length >= 2 && (
+                    <>
+                      {performanceTrend[performanceTrend.length - 1].score > performanceTrend[0].score ? (
+                        <span className="text-green-600 font-medium">
+                          ↗ Improved by {performanceTrend[performanceTrend.length - 1].score - performanceTrend[0].score} points
+                        </span>
+                      ) : performanceTrend[performanceTrend.length - 1].score < performanceTrend[0].score ? (
+                        <span className="text-red-600 font-medium">
+                          ↘ Declined by {performanceTrend[0].score - performanceTrend[performanceTrend.length - 1].score} points
+                        </span>
+                      ) : (
+                        <span className="text-blue-600 font-medium">
+                          → Consistent performance
+                        </span>
+                      )}
+                    </>
+                  )}
+                </p>
+              </div>
+            </div>
           )}
 
           <div className="space-y-4 flex-1">
@@ -833,6 +884,19 @@ const Results = () => {
           )}
         </div>
       </div>
+      
+      {/* Premium Export Modal */}
+      <ExportModal
+        isOpen={isExportModalOpen}
+        onClose={() => setIsExportModalOpen(false)}
+        attempts={filteredAttempts}
+        averageScore={averageScore}
+        totalAttempts={totalAttempts}
+        passedAttempts={passedAttempts}
+        distinctionAttempts={distinctionAttempts}
+        passRate={passRate}
+        performanceTrend={performanceTrend}
+      />
     </div>
   );
 };
