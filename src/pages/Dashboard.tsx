@@ -428,11 +428,10 @@ const Dashboard = () => {
   };
 
   const copyShareLink = (shareLink: string) => {
-    const fullLink = `${window.location.origin}/exam/${shareLink}`;
-    navigator.clipboard.writeText(fullLink);
+    navigator.clipboard.writeText(shareLink);
     toast({
       title: "Success",
-      description: "Exam link copied to clipboard!",
+      description: "Exam code copied to clipboard!",
     });
   };
 
@@ -576,7 +575,7 @@ const Dashboard = () => {
       {/* Dynamic Header */}
       <header className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-1">Academic Pulse</h1>
+          <h1 className="text-4xl font-black text-gray-900 tracking-tight mb-1">Do Stuff</h1>
           <p className="text-gray-500 font-medium">
             Welcome back, {user.profile?.full_name}! 
             Monitoring {isTeacher ? 'class performance' : 'your progress'} in real-time.
@@ -596,41 +595,7 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Performance Section with Calendar Heatmap */}
-      <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm">
-          <div className="flex items-center justify-between mb-6">
-            <div>
-              <h3 className="text-xl font-black text-gray-900">Overall Performance</h3>
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Track your exam activity and scores</p>
-            </div>
-          </div>
-          
-          {/* Activity Calendar */}
-          <ExamActivityCalendar attempts={attempts as AttemptData[]} isTeacher={isTeacher} />
-          
-          {/* Performance Summary Below Calendar */}
-          <div className="mt-6 grid grid-cols-3 gap-4">
-            <div className="bg-gray-50 rounded-2xl p-4 text-center">
-              <p className="text-2xl font-black text-gray-900">{attempts.length}</p>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Exams</p>
-            </div>
-            <div className="bg-gray-50 rounded-2xl p-4 text-center">
-              <p className="text-2xl font-black text-gray-900">{getAverageScore()}%</p>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Average Score</p>
-            </div>
-            <div className="bg-gray-50 rounded-2xl p-4 text-center">
-              <p className="text-2xl font-black text-gray-900">
-                {attempts.length > 0 ? Math.max(...attempts.map(a => a.score || 0)) : 0}%
-              </p>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Best Score</p>
-            </div>
-          </div>
-        </div>
-
-        </section>
-
-        {/* Interactive Stats Grid */}
+      {/* Interactive Stats Grid */}
       <section className={`grid grid-cols-2 ${isTeacher ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
         {stats.map((stat, i) => (
           <div key={i} className="bg-white border border-gray-100 p-6 rounded-[2rem] flex flex-col items-center text-center group hover:scale-[1.05] transition-all cursor-default shadow-sm hover:shadow-md">

@@ -267,11 +267,10 @@ const Exams = () => {
   };
 
   const copyShareLink = (shareLink: string) => {
-    const fullLink = `${window.location.origin}/exam/${shareLink}`;
-    navigator.clipboard.writeText(fullLink);
+    navigator.clipboard.writeText(shareLink);
     toast({
       title: "Success",
-      description: "Exam link copied to clipboard!",
+      description: "Exam code copied to clipboard!",
     });
   };
 
