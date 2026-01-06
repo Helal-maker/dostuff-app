@@ -1,17 +1,240 @@
 import { useAuth } from "@/hooks/useAuth";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Settings, Trophy, FileText, CheckCircle, Award, Clock, Search, Filter, Plus, Activity, User, Book, LogOut, BarChart3, Share2, HelpCircle, MessageSquare, Calendar, Target, TrendingUp, AlertCircle, XCircle } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Loader2, Settings, Trophy, FileText, CheckCircle, Award, Clock, Search, Filter, Plus, Activity, User, Book, LogOut, BarChart3, Share2, HelpCircle, MessageSquare, Calendar, Target, TrendingUp, AlertCircle, XCircle, ChevronLeft, ChevronRight } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, BarChart, Bar, Cell } from "recharts";
 import { useRealTimeFlaggedAttempts, useRealTimeSecurityEvents } from "@/hooks/useRealTimeExam";
 import { AuthUser, signOut } from "@/lib/auth";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import DashboardStatsGrid, { createExamStats, createStudentStats } from "@/components/dashboard/DashboardStatsGrid";
+
+interface AttemptData {
+  id: string;
+  created_at: string;
+  score: number;
+  exam?: { title: string };
+}
+
+// Enhanced Exam Activity Calendar Component
+const ExamActivityCalendar = ({ 
+  attempts, 
+  isTeacher 
+}: { 
+  attempts: AttemptData[], 
+  isTeacher: boolean 
+}) => {
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    new Date().toISOString().split('T')[0].substring(0, 7)
+  );
+  const [hoveredDay, setHoveredDay] = useState<{ date: Date; count: number; avgScore: number } | null>(null);
+
+  // Get unique months from attempts
+  const availableMonths = useMemo(() => {
+    const months = new Set<string>();
+    attempts.forEach(attempt => {
+      const date = new Date(attempt.created_at);
+      const monthKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+      months.add(monthKey);
+    });
+    // Add current month if not present
+    const currentMonth = new Date().toISOString().split('T')[0].substring(0, 7);
+    months.add(currentMonth);
+    return Array.from(months).sort().reverse();
+  }, [attempts]);
+
+  // Get days data for selected month
+  const monthDays = useMemo(() => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const firstDayOfMonth = new Date(year, month - 1, 1).getDay();
+    
+    const days = [];
+    const examCountsByDate = new Map<string, { count: number; scores: number[] }>();
+    
+    // Count attempts by date
+    attempts.forEach(attempt => {
+      const attemptDate = new Date(attempt.created_at);
+      const attemptMonth = `${attemptDate.getFullYear()}-${String(attemptDate.getMonth() + 1).padStart(2, '0')}`;
+      if (attemptMonth === selectedMonth) {
+        const dateKey = attemptDate.getDate().toString();
+        const existing = examCountsByDate.get(dateKey) || { count: 0, scores: [] };
+        existing.count += 1;
+        if (attempt.score !== null) existing.scores.push(attempt.score);
+        examCountsByDate.set(dateKey, existing);
+      }
+    });
+    
+    // Calculate max count for intensity scaling
+    const maxCount = Math.max(...Array.from(examCountsByDate.values()).map(v => v.count), 1);
+    
+    // Create day objects
+    for (let day = 1; day <= daysInMonth; day++) {
+      const date = new Date(year, month - 1, day);
+      const dayData = examCountsByDate.get(day.toString()) || { count: 0, scores: [] };
+      days.push({
+        day,
+        date,
+        count: dayData.count,
+        avgScore: dayData.scores.length > 0 
+          ? Math.round(dayData.scores.reduce((a, b) => a + b, 0) / dayData.scores.length)
+          : 0,
+        hasActivity: dayData.count > 0,
+        opacity: dayData.count > 0 ? 0.4 + (dayData.count / maxCount) * 0.6 : 0.2
+      });
+    }
+    
+    return { days, firstDayOfMonth, daysInMonth };
+  }, [selectedMonth, attempts]);
+
+  const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                      'July', 'August', 'September', 'October', 'November', 'December'];
+  const [year, monthNum] = selectedMonth.split('-').map(Number);
+  const currentMonthName = monthNames[monthNum - 1];
+
+  const navigateMonth = (direction: 'prev' | 'next') => {
+    const [year, month] = selectedMonth.split('-').map(Number);
+    let newYear = year;
+    let newMonth = month + (direction === 'next' ? 1 : -1);
+    
+    if (newMonth > 12) {
+      newMonth = 1;
+      newYear += 1;
+    } else if (newMonth < 1) {
+      newMonth = 12;
+      newYear -= 1;
+    }
+    
+    setSelectedMonth(`${newYear}-${String(newMonth).padStart(2, '0')}`);
+  };
+
+  return (
+    <div className="bg-white border border-gray-100 rounded-[2.5rem] p-6 shadow-sm">
+      {/* Month Navigation */}
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => navigateMonth('prev')}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <ChevronLeft size={20} className="text-gray-600" />
+          </button>
+          <h3 className="text-xl font-black text-gray-900">{currentMonthName} {year}</h3>
+          <button 
+            onClick={() => navigateMonth('next')}
+            className="p-2 rounded-full hover:bg-gray-100 transition-colors"
+          >
+            <ChevronRight size={20} className="text-gray-600" />
+          </button>
+        </div>
+        
+        {/* Month Tabs */}
+        <Tabs value={selectedMonth} onValueChange={setSelectedMonth} className="w-auto">
+          <TabsList className="bg-gray-50 border border-gray-200 rounded-xl p-1">
+            {availableMonths.slice(0, 6).map(month => {
+              const [mYear, mMonth] = month.split('-');
+              return (
+                <TabsTrigger 
+                  key={month}
+                  value={month}
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium data-[state=active]:bg-white data-[state=active]:shadow-sm transition-all"
+                >
+                  {monthNames[parseInt(mMonth) - 1].substring(0, 3)}
+                </TabsTrigger>
+              );
+            })}
+          </TabsList>
+        </Tabs>
+      </div>
+
+      {/* Heatmap Grid */}
+      <div className="relative">
+        {/* Day headers */}
+        <div className="grid grid-cols-7 gap-2 mb-2">
+          {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+            <div key={day} className="text-center text-xs font-bold text-gray-400 uppercase tracking-wider">
+              {day}
+            </div>
+          ))}
+        </div>
+        
+        {/* Calendar grid */}
+        <div className="grid grid-cols-7 gap-2">
+          {/* Empty cells for days before month starts */}
+          {Array.from({ length: monthDays.firstDayOfMonth }).map((_, index) => (
+            <div key={`empty-${index}`} className="aspect-square" />
+          ))}
+          
+          {/* Month days */}
+          {monthDays.days.map((dayData) => (
+            <div
+              key={dayData.day}
+              className={`relative aspect-square rounded-lg transition-all duration-300 cursor-pointer ${
+                dayData.hasActivity 
+                  ? 'bg-[#10B981] shadow-md hover:shadow-lg hover:scale-105' 
+                  : 'bg-gray-100 hover:bg-gray-200'
+              }`}
+              style={{ opacity: dayData.hasActivity ? dayData.opacity : 0.3 }}
+              onMouseEnter={() => setHoveredDay(dayData)}
+              onMouseLeave={() => setHoveredDay(null)}
+            >
+              <span className="absolute bottom-1 right-2 text-[10px] font-bold text-gray-500">
+                {dayData.day}
+              </span>
+            </div>
+          ))}
+        </div>
+
+        {/* Premium Tooltip */}
+        {hoveredDay && (
+          <div 
+            className="absolute z-50 bg-slate-900 text-white text-xs px-3 py-2.5 rounded-xl shadow-xl pointer-events-none"
+            style={{ 
+              top: '50%',
+              left: '50%',
+              transform: 'translate(-50%, -50%)',
+              minWidth: '140px'
+            }}
+          >
+            <div className="font-semibold mb-1">
+              {new Date(hoveredDay.date).toLocaleDateString('en-US', { 
+                weekday: 'long', 
+                month: 'short', 
+                day: 'numeric' 
+              })}
+            </div>
+            <div className="text-slate-300">
+              {hoveredDay.count > 0 
+                ? `${hoveredDay.count} exam${hoveredDay.count > 1 ? 's' : ''}`
+                : 'No exams'}
+            </div>
+            {hoveredDay.count > 0 && hoveredDay.avgScore > 0 && (
+              <div className="text-slate-300 mt-0.5">
+                Avg: {hoveredDay.avgScore}%
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Legend */}
+      <div className="flex items-center justify-center gap-4 mt-4 pt-4 border-t border-gray-100">
+        <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">Less</span>
+        <div className="flex gap-1">
+          <div className="w-4 h-4 rounded bg-gray-100"></div>
+          <div className="w-4 h-4 rounded bg-[#10B981] opacity-50"></div>
+          <div className="w-4 h-4 rounded bg-[#10B981]"></div>
+        </div>
+        <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wider">More</span>
+      </div>
+    </div>
+  );
+};
 
 const Dashboard = () => {
   const { user, loading, isAuthenticated, isTeacher, needsOnboarding } = useAuth();
@@ -247,15 +470,37 @@ const Dashboard = () => {
   };
 
   // Sample data for charts (mapped from real data where possible)
-  const chartData = [
-    { name: 'Mon', score: isTeacher ? 75 : (attempts[0]?.score || 45), classAvg: 40 },
-    { name: 'Tue', score: isTeacher ? 82 : (attempts[1]?.score || 52), classAvg: 45 },
-    { name: 'Wed', score: isTeacher ? 68 : (attempts[2]?.score || 38), classAvg: 42 },
-    { name: 'Thu', score: isTeacher ? 90 : (attempts[3]?.score || 65), classAvg: 40 },
-    { name: 'Fri', score: isTeacher ? 78 : (attempts[4]?.score || 48), classAvg: 48 },
-    { name: 'Sat', score: isTeacher ? 95 : (attempts[5]?.score || 85), classAvg: 50 },
-    { name: 'Sun', score: isTeacher ? 88 : (attempts[6]?.score || 92), classAvg: 52 },
-  ];
+  // Generate dynamic dates for the last 7 days based on current date
+  const getLast7DaysData = () => {
+    const days = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+    const data = [];
+    const today = new Date();
+    
+    for (let i = 6; i >= 0; i--) {
+      const date = new Date(today);
+      date.setDate(today.getDate() - i);
+      const dayName = days[date.getDay()];
+      const dateStr = date.toISOString().split('T')[0];
+      
+      // Find matching attempt for this date
+      const matchingAttempt = attempts.find(a => {
+        const attemptDate = new Date(a.created_at).toISOString().split('T')[0];
+        return attemptDate === dateStr;
+      });
+      
+      data.push({
+        name: dayName,
+        date: dateStr,
+        score: matchingAttempt?.score || 0,
+        hasData: !!matchingAttempt,
+        classAvg: isTeacher ? 40 + Math.floor(Math.random() * 20) : 45 + Math.floor(Math.random() * 15)
+      });
+    }
+    
+    return data;
+  };
+
+  const chartData = getLast7DaysData();
 
   // Computed stats mapped to reference UI structure
   const stats = isTeacher ? [
@@ -266,24 +511,48 @@ const Dashboard = () => {
   ] : [
     { label: "Active Exams", value: attempts.length.toString(), icon: Book, color: "text-blue-500", bg: "bg-blue-50" },
     { label: "Completed", value: `${getAverageScore()}%`, icon: CheckCircle, color: "text-green-500", bg: "bg-green-50" },
-    { label: "Best Score", value: attempts.length > 0 ? `${Math.max(...attempts.map(a => a.score || 0))}%` : "0%", icon: Award, color: "text-yellow-500", bg: "bg-yellow-50" },
-    { label: "Study Time", value: "24h", icon: Clock, color: "text-pink-500", bg: "bg-pink-50" }
+    { label: "Best Score", value: attempts.length > 0 ? `${Math.max(...attempts.map(a => a.score || 0))}%` : "0%", icon: Award, color: "text-yellow-500", bg: "bg-yellow-50" }
   ];
 
-  // Recent activity data mapped from real data
-  const recentActivity = isTeacher 
-    ? exams.slice(0, 3).map(exam => ({
-        title: exam.title,
-        date: new Date(exam.created_at).toLocaleDateString(),
-        score: exam._count?.attempts || 0,
-        status: exam.is_published ? "Published" : "Draft"
-      }))
-    : attempts.slice(0, 3).map(attempt => ({
-        title: attempt.exam.title,
-        date: new Date(attempt.start_time).toLocaleDateString(),
-        score: attempt.score || 0,
-        status: (attempt.score || 0) >= 80 ? "Distinction" : (attempt.score || 0) >= 60 ? "Pass" : "Failed"
-      }));
+  // Recent activity data with search filter
+  const filteredRecentActivity = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
+    
+    if (!query) {
+      return isTeacher 
+        ? exams.slice(0, 3).map(exam => ({
+            title: exam.title,
+            date: new Date(exam.created_at).toLocaleDateString(),
+            score: exam._count?.attempts || 0,
+            status: exam.is_published ? "Published" : "Draft"
+          }))
+        : attempts.slice(0, 3).map(attempt => ({
+            title: attempt.exam.title,
+            date: new Date(attempt.start_time).toLocaleDateString(),
+            score: attempt.score || 0,
+            status: (attempt.score || 0) >= 80 ? "Distinction" : (attempt.score || 0) >= 60 ? "Pass" : "Failed"
+          }));
+    }
+    
+    const allActivity = isTeacher 
+      ? exams.map(exam => ({
+          title: exam.title,
+          date: new Date(exam.created_at).toLocaleDateString(),
+          score: exam._count?.attempts || 0,
+          status: exam.is_published ? "Published" : "Draft"
+        }))
+      : attempts.map(attempt => ({
+          title: attempt.exam.title,
+          date: new Date(attempt.start_time).toLocaleDateString(),
+          score: attempt.score || 0,
+          status: (attempt.score || 0) >= 80 ? "Distinction" : (attempt.score || 0) >= 60 ? "Pass" : "Failed"
+        }));
+    
+    return allActivity.filter(item => 
+      item.title.toLowerCase().includes(query) ||
+      item.status.toLowerCase().includes(query)
+    ).slice(0, 6);
+  }, [searchQuery, isTeacher, exams, attempts]);
 
   if (loading || loadingData) {
     return (
@@ -315,16 +584,6 @@ const Dashboard = () => {
         </div>
         
         <div className="flex items-center space-x-3">
-          <div className="relative group flex-1 md:w-64">
-             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#7C3AED] transition-colors" size={18} />
-             <input 
-               type="text" 
-               placeholder="Search assessments..." 
-               className="w-full pl-12 pr-4 py-3 bg-white border border-gray-100 rounded-2xl text-sm focus:ring-4 focus:ring-[#7C3AED]/10 focus:border-[#7C3AED] outline-none transition-all"
-               value={searchQuery}
-               onChange={(e) => setSearchQuery(e.target.value)}
-             />
-          </div>
           {isTeacher && (
             <button 
               onClick={() => navigate('/create-exam')}
@@ -334,124 +593,45 @@ const Dashboard = () => {
               <span className="hidden md:block">Create New</span>
             </button>
           )}
-          <Button
-            onClick={handleSignOut}
-            variant="outline"
-            size="lg"
-            className="hidden md:flex"
-          >
-            <LogOut className="w-5 h-5 mr-2" />
-            Sign Out
-          </Button>
         </div>
       </header>
 
-      {/* Performance Trend Chart */}
+      {/* Performance Section with Calendar Heatmap */}
       <section className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm relative overflow-hidden group">
-          <div className="absolute top-0 right-0 p-8 opacity-5">
-            <Activity size={120} className="text-[#7C3AED]" />
+        <div className="lg:col-span-2 bg-white border border-gray-100 rounded-[2.5rem] p-8 shadow-sm">
+          <div className="flex items-center justify-between mb-6">
+            <div>
+              <h3 className="text-xl font-black text-gray-900">Overall Performance</h3>
+              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Track your exam activity and scores</p>
+            </div>
           </div>
           
-          <div className="flex items-center justify-between mb-10 relative z-10">
-            <div>
-              <h3 className="text-xl font-black text-gray-900">Performance Trend</h3>
-              <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Track your performance progression over time</p>
+          {/* Activity Calendar */}
+          <ExamActivityCalendar attempts={attempts as AttemptData[]} isTeacher={isTeacher} />
+          
+          {/* Performance Summary Below Calendar */}
+          <div className="mt-6 grid grid-cols-3 gap-4">
+            <div className="bg-gray-50 rounded-2xl p-4 text-center">
+              <p className="text-2xl font-black text-gray-900">{attempts.length}</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Total Exams</p>
             </div>
-            <div className="flex space-x-2">
-               <button className="px-4 py-1.5 bg-gray-50 text-gray-400 text-[10px] font-black rounded-lg hover:bg-[#7C3AED]/10 hover:text-[#7C3AED] transition-all">Last 7 Days</button>
-               <button className="px-4 py-1.5 bg-gray-50 text-gray-400 text-[10px] font-black rounded-lg hover:bg-[#7C3AED]/10 hover:text-[#7C3AED] transition-all">Last Month</button>
+            <div className="bg-gray-50 rounded-2xl p-4 text-center">
+              <p className="text-2xl font-black text-gray-900">{getAverageScore()}%</p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Average Score</p>
             </div>
-          </div>
-
-          <div className="h-72 w-full relative z-10">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="performanceGradient" x1="0" y1="1" x2="0" y2="0">
-                    <stop offset="0%" stopColor="#EF4444" stopOpacity={1}/>
-                    <stop offset="50%" stopColor="#EAB308" stopOpacity={1}/>
-                    <stop offset="100%" stopColor="#22C55E" stopOpacity={1}/>
-                  </linearGradient>
-                  
-                  <linearGradient id="performanceFill" x1="0" y1="1" x2="0" y2="0">
-                    <stop offset="0%" stopColor="#EF4444" stopOpacity={0.2}/>
-                    <stop offset="50%" stopColor="#EAB308" stopOpacity={0.2}/>
-                    <stop offset="100%" stopColor="#22C55E" stopOpacity={0.2}/>
-                  </linearGradient>
-                </defs>
-                <CartesianGrid strokeDasharray="5 5" vertical={false} stroke="#f1f5f9" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fontSize: 11, fontWeight: 700, fill: '#cbd5e1'}} dy={10} />
-                <YAxis axisLine={false} tickLine={false} tick={{fontSize: 11, fontWeight: 700, fill: '#cbd5e1'}} />
-                <Tooltip 
-                  contentStyle={{ border: 'none', borderRadius: '20px', boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.15)', padding: '15px' }}
-                  itemStyle={{ fontWeight: 800, fontSize: '12px' }}
-                  labelStyle={{ fontWeight: 900, marginBottom: '5px', color: '#1e293b' }}
-                />
-                <Area 
-                  type="monotone" 
-                  dataKey="score" 
-                  stroke="url(#performanceGradient)" 
-                  strokeWidth={4} 
-                  fillOpacity={1} 
-                  fill="url(#performanceFill)" 
-                  dot={{ r: 6, fill: 'url(#performanceGradient)', strokeWidth: 3, stroke: '#fff' }} 
-                  activeDot={{ r: 8, strokeWidth: 4 }} 
-                />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-          <div className="mt-4 text-center relative z-10">
-            <p className="text-sm text-gray-600">
-              {chartData.length >= 2 && (
-                <>
-                  {chartData[chartData.length - 1].score > chartData[0].score ? (
-                    <span className="text-green-600 font-medium">
-                      ↗ Improved by {chartData[chartData.length - 1].score - chartData[0].score} points
-                    </span>
-                  ) : chartData[chartData.length - 1].score < chartData[0].score ? (
-                    <span className="text-red-600 font-medium">
-                      ↘ Declined by {chartData[0].score - chartData[chartData.length - 1].score} points
-                    </span>
-                  ) : (
-                    <span className="text-blue-600 font-medium">
-                      → Consistent performance
-                    </span>
-                  )}
-                </>
-              )}
-            </p>
+            <div className="bg-gray-50 rounded-2xl p-4 text-center">
+              <p className="text-2xl font-black text-gray-900">
+                {attempts.length > 0 ? Math.max(...attempts.map(a => a.score || 0)) : 0}%
+              </p>
+              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Best Score</p>
+            </div>
           </div>
         </div>
 
-        {/* Quick Insight Panel */}
-        <div className="bg-gradient-to-br from-[#7C3AED] to-[#4F46E5] rounded-[2.5rem] p-8 text-white flex flex-col justify-between shadow-2xl relative overflow-hidden">
-           <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -translate-x-10 -translate-y-10"></div>
-           <div className="relative z-10">
-             <div className="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6 backdrop-blur-md">
-               <Trophy size={24} />
-             </div>
-             <h4 className="text-2xl font-black mb-2">Achievement Unlocked!</h4>
-             <p className="text-white/70 font-medium text-sm leading-relaxed mb-8">
-               {isTeacher 
-                ? `${flaggedAttempts.length} students have been flagged for review today.` 
-                : "You've maintained a 90%+ score for 3 weeks straight. Keep it up!"}
-             </p>
-           </div>
-           
-           <div className="bg-white/10 rounded-2xl p-4 backdrop-blur-md border border-white/10 flex items-center justify-between">
-              <div className="flex -space-x-3">
-                {[1, 2, 3].map(i => (
-                  <div key={i} className="w-8 h-8 rounded-full border-2 border-[#7C3AED] bg-indigo-200"></div>
-                ))}
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-widest">+{recentActivity.length} more events</span>
-           </div>
-        </div>
-      </section>
+        </section>
 
-      {/* Interactive Stats Grid */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-6">
+        {/* Interactive Stats Grid */}
+      <section className={`grid grid-cols-2 ${isTeacher ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-6`}>
         {stats.map((stat, i) => (
           <div key={i} className="bg-white border border-gray-100 p-6 rounded-[2rem] flex flex-col items-center text-center group hover:scale-[1.05] transition-all cursor-default shadow-sm hover:shadow-md">
             <div className={`${stat.bg} ${stat.color} p-4 rounded-2xl mb-4 group-hover:scale-110 transition-transform`}>
@@ -467,19 +647,38 @@ const Dashboard = () => {
       <section className="space-y-6">
         <div className="flex items-center justify-between">
           <h3 className="text-xl font-black text-gray-900">Recent Activity</h3>
-          <button className="text-[#7C3AED] text-sm font-black hover:underline">View History</button>
+          <button 
+            onClick={() => navigate(isTeacher ? '/exams' : '/results')}
+            className="text-[#7C3AED] text-sm font-black hover:underline"
+          >
+            View History
+          </button>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {recentActivity.map((item, i) => (
-            <div key={i} className="bg-white border border-gray-100 p-5 rounded-3xl flex items-center justify-between shadow-sm hover:shadow-lg transition-all group border-l-4 border-l-[#7C3AED]">
-              <div>
-                <h5 className="font-bold text-gray-900 group-hover:text-[#7C3AED] transition-colors">{item.title}</h5>
-                <p className="text-[10px] font-bold text-gray-400 uppercase">{item.date}</p>
-              </div>
-              <div className="text-right">
-                <span className={`text-sm font-black ${item.score >= 50 ? 'text-green-500' : 'text-red-500'}`}>{item.score}%</span>
-                <p className="text-[9px] font-bold text-gray-400 uppercase tracking-tighter">{item.status}</p>
+          {filteredRecentActivity.map((item, i) => (
+            <div 
+              key={i} 
+              className="group flex flex-col lg:flex-row items-stretch justify-between bg-[#F8FAFC] rounded-[2rem] border-2 border-transparent hover:border-[#10B981]/10 hover:bg-white transition-all duration-300 p-2 shadow-sm hover:shadow-xl cursor-pointer"
+              onClick={() => navigate(isTeacher ? `/exams/${item.title}` : `/results`)}
+            >
+              <div className="flex items-center space-x-6 p-4 md:p-6 flex-1 min-w-0">
+                <div className="shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-xl transition-transform group-hover:scale-110 text-yellow-600 bg-yellow-100 shadow-inner">
+                  <Trophy size={24} />
+                </div>
+                <div className="space-y-2 min-w-0 flex-1">
+                  <p className="text-[16px] font-[800] text-gray-800 leading-[1.4] group-hover:text-gray-900 transition-colors break-words">{item.title}</p>
+                  <div className="flex items-center space-x-3">
+                    <span className="text-[9px] font-black text-gray-400 uppercase tracking-[0.2em] bg-white border border-gray-100 px-3 py-1 rounded-lg group-hover:bg-gray-50 transition-colors">{item.date}</span>
+                    <span className="text-[9px] font-black text-yellow-600 uppercase tracking-widest">{item.status}</span>
+                  </div>
+                  <div className="flex items-center space-x-4">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-sm text-gray-600">Score:</span>
+                      <span className={`text-lg font-bold ${item.score >= 80 ? 'text-yellow-600' : item.score >= 60 ? 'text-green-500' : 'text-red-500'}`}>{item.score}%</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           ))}

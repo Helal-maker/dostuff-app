@@ -53,6 +53,8 @@ import {
   Loader2,
   BookOpen,
   TrendingUp,
+  TrendingDown,
+  Minus,
   Award,
   Zap,
   BarChart3,
@@ -111,6 +113,8 @@ const Results = () => {
     max: Number(searchParams.get("maxScore") || 100),
   });
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [timeRange, setTimeRange] = useState<"7days" | "30days" | "all">("all");
+  const [animationKey, setAnimationKey] = useState(0);
 
   useEffect(() => {
     if (authLoading) return;
@@ -294,6 +298,23 @@ const Results = () => {
     return "#3b82f6"; // Blue for stable
   };
 
+  // Get filtered performance data based on time range
+  const getFilteredPerformanceData = () => {
+    const now = new Date();
+    
+    if (timeRange === "7days") {
+      const sevenDaysAgo = new Date(now);
+      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+      return performanceTrend.filter(d => new Date(d.date) >= sevenDaysAgo);
+    } else if (timeRange === "30days") {
+      const thirtyDaysAgo = new Date(now);
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      return performanceTrend.filter(d => new Date(d.date) >= thirtyDaysAgo);
+    }
+    
+    return performanceTrend;
+  };
+
   const handleExportClick = () => {
     setIsExportModalOpen(true);
   };
@@ -327,37 +348,42 @@ const Results = () => {
   const averageScore = attempts.length > 0 ? Math.round(attempts.reduce((sum, a) => sum + a.score, 0) / attempts.length) : 0;
   const passRate = totalAttempts > 0 ? Math.round((passedAttempts / totalAttempts) * 100) : 0;
 
-  // Process exam data for calendar heatmap
+  // Process exam data for calendar heatmap with proper date handling
   const processExamData = () => {
-    // Detect if user is teacher (you might want to get this from user profile)
     const isTeacher = user?.user_metadata?.role === 'teacher' || user?.app_metadata?.role === 'teacher';
     
     // Group attempts by date (for students) or by exam creation date (for teachers)
-    const examCountsByDate = new Map();
+    const examCountsByDate = new Map<string, number>();
+    const examScoresByDate = new Map<string, number[]>();
     
     if (isTeacher) {
       // For teachers: group by exam creation date
-      // Note: This would need to be fetched from the exams table with creation dates
-      // For now, using end_time as a placeholder - in real implementation, fetch from exams table
       attempts.forEach(attempt => {
-        const date = new Date(attempt.end_time).toDateString(); // Placeholder - should be exam creation date
+        const date = new Date(attempt.end_time).toISOString().split('T')[0];
         examCountsByDate.set(date, (examCountsByDate.get(date) || 0) + 1);
       });
     } else {
       // For students: group by exam completion date
       attempts.forEach(attempt => {
-        const date = new Date(attempt.end_time).toDateString();
+        const date = new Date(attempt.end_time).toISOString().split('T')[0];
         examCountsByDate.set(date, (examCountsByDate.get(date) || 0) + 1);
+        // Track scores for performance calculation
+        if (attempt.score !== null) {
+          const scores = examScoresByDate.get(date) || [];
+          scores.push(attempt.score);
+          examScoresByDate.set(date, scores);
+        }
       });
     }
 
-    // Get the date range for the last 100 days
+    // Get the date range for the last 100 days - dynamically calculated
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const dates = [];
     for (let i = 99; i >= 0; i--) {
       const date = new Date(today);
       date.setDate(date.getDate() - i);
-      dates.push(date.toDateString());
+      dates.push(date.toISOString().split('T')[0]);
     }
 
     // Find max exams per day for opacity scaling
@@ -367,18 +393,26 @@ const Results = () => {
     const examData = dates.map(dateString => {
       const examCount = examCountsByDate.get(dateString) || 0;
       const date = new Date(dateString);
-      const isToday = dateString === today.toDateString();
+      const isToday = dateString === today.toISOString().split('T')[0];
+      
+      // Calculate average score for the day
+      const scores = examScoresByDate.get(dateString) || [];
+      const avgScore = scores.length > 0 
+        ? scores.reduce((sum, s) => sum + s, 0) / scores.length 
+        : 0;
       
       return {
         date,
+        dateString,
         examCount,
         isToday,
         hasExams: examCount > 0,
+        avgScore,
         opacity: examCount > 0 ? 0.4 + (examCount / maxExamsPerDay) * 0.6 : 0.3
       };
     });
 
-    return { examData, isTeacher };
+    return { examData, isTeacher, examCountsByDate, examScoresByDate };
   };
 
   const { examData, isTeacher } = processExamData();
@@ -475,7 +509,7 @@ const Results = () => {
                 <div className="bg-[#DCFCE7] text-[#166534] px-3 py-1.5 rounded-full flex items-center space-x-1.5 shadow-sm">
                    <Star size={10} fill="currentColor" />
                    <span className="text-[9px] font-black uppercase tracking-widest">
-                     {averageScore >= 90 ? 'Elite Tier' : averageScore >= 80 ? 'Advanced Tier' : averageScore >= 70 ? 'Proficient Tier' : 'Developing Tier'}
+                     {averageScore >= 90 ? 'Elite Tier' : averageScore >= 80 ? 'Advanced Tier' : 'Proficient Tier'}
                    </span>
                 </div>
              </div>
@@ -499,7 +533,7 @@ const Results = () => {
                           lg:w-4 lg:h-4 
                           xl:w-5 xl:h-5 
                           rounded-[3px] lg:rounded-[4px] 
-                          transition-all duration-700 ease-out 
+                          transition-all duration-700 ease-out cursor-pointer relative group/cell
                           ${dayData.isToday 
                             ? 'bg-gradient-to-br from-pink-400 via-pink-500 to-pink-600 shadow-[0_8px_25px_rgba(236,72,153,0.4),0_4px_12px_rgba(236,72,153,0.3)] ring-2 ring-pink-300 ring-offset-1 ring-offset-white'
                             : dayData.hasExams 
@@ -510,8 +544,20 @@ const Results = () => {
                           opacity: dayData.isToday ? 1 : dayData.opacity,
                           transform: dayData.hasExams || dayData.isToday ? 'scale(1.05)' : 'scale(0.85)'
                         }}
-                        title={`${dayData.date.toLocaleDateString()}${dayData.hasExams ? ` - ${dayData.examCount} exam${dayData.examCount > 1 ? 's' : ''}` : ' - No exams'}`}
-                      />
+                      >
+                        {/* Premium Compact Tooltip */}
+                        <div className="absolute -top-14 left-1/2 transform -translate-x-1/2 bg-slate-900 text-white text-xs px-3 py-1.5 rounded-lg opacity-0 group-hover/cell:opacity-100 transition-all duration-200 pointer-events-none z-20 whitespace-nowrap shadow-lg">
+                          <div className="font-semibold">
+                            {new Date(dayData.dateString).toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })}
+                          </div>
+                          <div className="text-slate-300 text-[10px]">
+                            {dayData.hasExams 
+                              ? `${dayData.examCount} exam${dayData.examCount > 1 ? 's' : ''}` 
+                              : 'No exams'}
+                          </div>
+                          <div className="absolute top-full left-1/2 transform -translate-x-1/2 w-0 h-0 border-l-3 border-r-3 border-t-3 border-transparent border-t-slate-900"></div>
+                        </div>
+                      </div>
                     ))}
                   </div>
                   
@@ -522,7 +568,7 @@ const Results = () => {
                         <div className="w-8 h-8 bg-gradient-to-br from-pink-400 to-pink-600 rounded-xl flex items-center justify-center shadow-lg">
                           <Calendar className="w-4 h-4 text-white" />
                         </div>
-                        <p className="font-bold text-white text-base">📊 {isTeacher ? 'Exam Creation' : 'Exam Activity'} Calendar</p>
+                        <p className="font-bold text-white text-base">{isTeacher ? 'Exam Creation' : 'Exam Activity'} Calendar</p>
                       </div>
                       <div className="space-y-2 text-slate-300">
                         <div className="flex items-center gap-2">
@@ -592,79 +638,76 @@ const Results = () => {
 
         {/* Right Column: Detailed Section Review and Performance */}
         <div className="flex-1 w-full min-w-0 bg-white rounded-[2.5rem] p-6 lg:p-12 shadow-2xl shadow-gray-200/40 border border-gray-100 flex flex-col mb-24 md:mb-0">
-          <div className="flex flex-col sm:flex-row sm:items-end justify-between mb-12 gap-6">
-            <div>
-              <div className="flex items-center space-x-3 mb-2">
-                <div className="p-2.5 bg-emerald-50 text-[#10B981] rounded-2xl">
-                  <BarChart3 size={24} strokeWidth={2.5} />
-                </div>
-                <h3 className="text-4xl md:text-5xl font-[1000] text-gray-900 tracking-tight leading-none">Analytics & Insights</h3>
+          <div className="mb-12">
+            <div className="flex items-center space-x-3 mb-2">
+              <div className="p-2.5 bg-emerald-50 text-[#10B981] rounded-2xl">
+                <BarChart3 size={24} strokeWidth={2.5} />
               </div>
-              <p className="text-gray-400 font-bold text-sm ml-[3.25rem]">Performance analysis & detailed results</p>
+              <h3 className="text-4xl md:text-5xl font-[1000] text-gray-900 tracking-tight leading-none whitespace-nowrap">Analytics & Insights</h3>
             </div>
-            <div className="flex flex-col items-end gap-3">
-               <div className="bg-gray-50 border border-gray-100 px-6 py-3 rounded-2xl flex items-center space-x-3 shadow-sm">
-                 <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Results Found</span>
-                 <span className="text-xl font-[900] text-gray-900">{filteredAttempts.length}</span>
-               </div>
-               {/* Filters and Search */}
-               <div className="flex gap-2">
-                 <div className="relative">
-                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                   <Input
-                     placeholder="Search exams..."
-                     value={searchTerm}
-                     onChange={(e) => setSearchTerm(e.target.value)}
-                     className="pl-9 w-40 bg-white/70 backdrop-blur-sm border-white/20"
-                   />
-                 </div>
-                 
-                 <DropdownMenu>
-                   <DropdownMenuTrigger asChild>
-                     <Button variant="outline" className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border-white/20">
-                       <SlidersHorizontal className="h-4 w-4" />
-                       <span>Filter</span>
-                       <ChevronDown className="h-4 w-4 opacity-50" />
-                     </Button>
-                   </DropdownMenuTrigger>
-                   <DropdownMenuContent align="end" className="w-56">
-                     <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
-                     <DropdownMenuRadioGroup value={statusFilter} onValueChange={(value) => setStatusFilter(value as FilterStatus)}>
-                       <DropdownMenuRadioItem value="all">All Results</DropdownMenuRadioItem>
-                       <DropdownMenuRadioItem value="distinction">Distinction</DropdownMenuRadioItem>
-                       <DropdownMenuRadioItem value="pass">Pass</DropdownMenuRadioItem>
-                       <DropdownMenuRadioItem value="fail">Fail</DropdownMenuRadioItem>
-                     </DropdownMenuRadioGroup>
-                     
-                     <DropdownMenuSeparator />
-                     
-                     <DropdownMenuItem onClick={resetFilters}>
-                       Reset Filters
-                     </DropdownMenuItem>
-                   </DropdownMenuContent>
-                 </DropdownMenu>
-                 
-                 <DropdownMenu>
-                   <DropdownMenuTrigger asChild>
-                     <Button variant="outline" className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border-white/20">
-                       <ArrowUpDown className="h-4 w-4" />
-                       <span>Sort</span>
-                       <ChevronDown className="h-4 w-4 opacity-50" />
-                     </Button>
-                   </DropdownMenuTrigger>
-                   <DropdownMenuContent align="end" className="w-56">
-                     <DropdownMenuRadioGroup value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
-                       <DropdownMenuRadioItem value="date-newest">Date (Newest First)</DropdownMenuRadioItem>
-                       <DropdownMenuRadioItem value="date-oldest">Date (Oldest First)</DropdownMenuRadioItem>
-                       <DropdownMenuRadioItem value="score-high">Score (High to Low)</DropdownMenuRadioItem>
-                       <DropdownMenuRadioItem value="score-low">Score (Low to High)</DropdownMenuRadioItem>
-                       <DropdownMenuRadioItem value="title-asc">Title (A-Z)</DropdownMenuRadioItem>
-                       <DropdownMenuRadioItem value="title-desc">Title (Z-A)</DropdownMenuRadioItem>
-                       <DropdownMenuRadioItem value="status">Status</DropdownMenuRadioItem>
-                     </DropdownMenuRadioGroup>
-                   </DropdownMenuContent>
-                 </DropdownMenu>
-               </div>
+            <p className="text-gray-400 font-bold text-sm mt-1">Performance analysis & detailed results</p>
+            
+            {/* Filters and Search - below title, aligned left */}
+            <div className="flex flex-wrap items-center gap-3 mt-6">
+              <div className="bg-gray-50 border border-gray-100 px-6 py-3 rounded-2xl flex items-center space-x-3 shadow-sm">
+                <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.2em]">Results Found</span>
+                <span className="text-xl font-[900] text-gray-900">{filteredAttempts.length}</span>
+              </div>
+              <div className="relative">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search exams..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9 w-40 bg-white/70 backdrop-blur-sm border-white/20"
+                />
+              </div>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border-white/20">
+                    <SlidersHorizontal className="h-4 w-4" />
+                    <span>Filter</span>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuLabel>Filter by Status</DropdownMenuLabel>
+                  <DropdownMenuRadioGroup value={statusFilter} onValueChange={(value) => setStatusFilter(value as FilterStatus)}>
+                    <DropdownMenuRadioItem value="all">All Results</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="distinction">Distinction</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="pass">Pass</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="fail">Fail</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                  
+                  <DropdownMenuSeparator />
+                  
+                  <DropdownMenuItem onClick={resetFilters}>
+                    Reset Filters
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" className="flex items-center gap-2 bg-white/70 backdrop-blur-sm border-white/20">
+                    <ArrowUpDown className="h-4 w-4" />
+                    <span>Sort</span>
+                    <ChevronDown className="h-4 w-4 opacity-50" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-56">
+                  <DropdownMenuRadioGroup value={sortBy} onValueChange={(value) => setSortBy(value as SortOption)}>
+                    <DropdownMenuRadioItem value="date-newest">Date (Newest First)</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="date-oldest">Date (Oldest First)</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="score-high">Score (High to Low)</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="score-low">Score (Low to High)</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="title-asc">Title (A-Z)</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="title-desc">Title (Z-A)</DropdownMenuRadioItem>
+                    <DropdownMenuRadioItem value="status">Status</DropdownMenuRadioItem>
+                  </DropdownMenuRadioGroup>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
 
@@ -681,14 +724,48 @@ const Results = () => {
                   <p className="text-xs text-gray-400 font-bold uppercase tracking-widest mt-1">Track your performance progression over time</p>
                 </div>
                 <div className="flex space-x-2">
-                  <button className="px-4 py-1.5 bg-gray-50 text-gray-400 text-[10px] font-black rounded-lg hover:bg-[#7C3AED]/10 hover:text-[#7C3AED] transition-all">Last 7 Days</button>
-                  <button className="px-4 py-1.5 bg-gray-50 text-gray-400 text-[10px] font-black rounded-lg hover:bg-[#7C3AED]/10 hover:text-[#7C3AED] transition-all">Last Month</button>
+                  <button 
+                    onClick={() => {
+                      setAnimationKey(prev => prev + 1);
+                      setTimeRange("7days");
+                    }}
+                    className={`px-4 py-1.5 text-[10px] font-black rounded-lg transition-all ${timeRange === "7days" ? "bg-[#7C3AED] text-white shadow-lg" : "bg-gray-50 text-gray-400 hover:bg-[#7C3AED]/10 hover:text-[#7C3AED]"}`}
+                  >
+                    Last 7 Days
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setAnimationKey(prev => prev + 1);
+                      setTimeRange("30days");
+                    }}
+                    className={`px-4 py-1.5 text-[10px] font-black rounded-lg transition-all ${timeRange === "30days" ? "bg-[#7C3AED] text-white shadow-lg" : "bg-gray-50 text-gray-400 hover:bg-[#7C3AED]/10 hover:text-[#7C3AED]"}`}
+                  >
+                    Last Month
+                  </button>
                 </div>
               </div>
 
-              <div className="h-72 w-full relative z-10">
+              <div 
+                key={animationKey}
+                className="h-72 w-full relative z-10 animate-slide-in-left"
+                style={{
+                  animation: 'slideInLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              >
+                <style>{`
+                  @keyframes slideInLeft {
+                    from {
+                      opacity: 0;
+                      transform: translateX(-30px);
+                    }
+                    to {
+                      opacity: 1;
+                      transform: translateX(0);
+                    }
+                  }
+                `}</style>
                 <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={performanceTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                  <AreaChart data={getFilteredPerformanceData()} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                     <defs>
                       <linearGradient id="performanceGradient" x1="0" y1="1" x2="0" y2="0">
                         <stop offset="0%" stopColor="#EF4444" stopOpacity={1}/>
@@ -746,26 +823,83 @@ const Results = () => {
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
-              <div className="mt-4 text-center relative z-10">
-                <p className="text-sm text-gray-600">
-                  {performanceTrend.length >= 2 && (
-                    <>
-                      {performanceTrend[performanceTrend.length - 1].score > performanceTrend[0].score ? (
-                        <span className="text-green-600 font-medium">
-                          ↗ Improved by {performanceTrend[performanceTrend.length - 1].score - performanceTrend[0].score} points
-                        </span>
-                      ) : performanceTrend[performanceTrend.length - 1].score < performanceTrend[0].score ? (
-                        <span className="text-red-600 font-medium">
-                          ↘ Declined by {performanceTrend[0].score - performanceTrend[performanceTrend.length - 1].score} points
-                        </span>
-                      ) : (
-                        <span className="text-blue-600 font-medium">
-                          → Consistent performance
-                        </span>
-                      )}
-                    </>
-                  )}
-                </p>
+              <div 
+                key={`insight-${animationKey}`}
+                className="mt-6 text-center relative z-10 animate-slide-in-left"
+                style={{
+                  animation: 'slideInLeft 0.5s cubic-bezier(0.4, 0, 0.2, 1)'
+                }}
+              >
+                {(() => {
+                  // Filter data based on time range
+                  const now = new Date();
+                  let filteredData = [...performanceTrend];
+                  
+                  if (timeRange === "7days") {
+                    const sevenDaysAgo = new Date(now);
+                    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+                    filteredData = performanceTrend.filter(d => new Date(d.date) >= sevenDaysAgo);
+                  } else if (timeRange === "30days") {
+                    const thirtyDaysAgo = new Date(now);
+                    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+                    filteredData = performanceTrend.filter(d => new Date(d.date) >= thirtyDaysAgo);
+                  }
+                  
+                  if (filteredData.length < 2) return null;
+                  
+                  const firstScore = filteredData[0].score;
+                  const lastScore = filteredData[filteredData.length - 1].score;
+                  const scoreDiff = lastScore - firstScore;
+                  const avgFiltered = Math.round(filteredData.reduce((sum, d) => sum + d.score, 0) / filteredData.length);
+                  const passCount = filteredData.filter(d => d.status === "pass" || d.status === "distinction").length;
+                  const passRateFiltered = Math.round((passCount / filteredData.length) * 100);
+                  
+                  // Determine trend type
+                  let trendType: "improving" | "declining" | "consistent" = "consistent";
+                  let trendMessage = "Consistent Performance";
+                  let TrendIcon = Minus;
+                  let iconColor = "text-blue-500";
+                  let bgColor = "bg-blue-50";
+                  let borderColor = "border-blue-200";
+                  
+                  if (scoreDiff > 5) {
+                    trendType = "improving";
+                    trendMessage = "Showing Improvement";
+                    TrendIcon = TrendingUp;
+                    iconColor = "text-green-500";
+                    bgColor = "bg-green-50";
+                    borderColor = "border-green-200";
+                  } else if (scoreDiff < -5) {
+                    trendType = "declining";
+                    trendMessage = "Needs Attention";
+                    TrendIcon = TrendingDown;
+                    iconColor = "text-red-500";
+                    bgColor = "bg-red-50";
+                    borderColor = "border-red-200";
+                  }
+                  
+                  return (
+                    <div className={`inline-flex items-center gap-3 ${bgColor} ${borderColor} px-6 py-3 rounded-2xl border shadow-sm hover:shadow-md transition-all duration-300`}>
+                      <div className={`p-2 rounded-xl bg-white shadow-sm`}>
+                        <TrendIcon size={18} className={iconColor} />
+                      </div>
+                      <div className="text-left">
+                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest mb-0.5">{trendMessage}</p>
+                        <p className="text-sm font-semibold text-gray-700">
+                          {trendType === "improving" && (
+                            <>Score up by <span className="text-green-600">{scoreDiff} points</span> • Avg {avgFiltered}%</>
+                          )}
+                          {trendType === "declining" && (
+                            <>Score down by <span className="text-red-600">{Math.abs(scoreDiff)} points</span> • Avg {avgFiltered}%</>
+                          )}
+                          {trendType === "consistent" && (
+                            <>Steady at <span className="text-blue-600">{avgFiltered}%</span> • {passRateFiltered}% pass rate</>
+                          )}
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </div>
           )}

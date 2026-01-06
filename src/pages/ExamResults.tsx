@@ -1,11 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
-import { getAttemptAnalytics, isAttemptTerminated, getTerminationMessage, getFailureReason } from "@/lib/anti-cheating";
+import { getAttemptAnalytics } from "@/lib/anti-cheating";
 
 interface ExamResult {
   id: string;
@@ -35,7 +32,6 @@ const ExamResults = () => {
   const [result, setResult] = useState<ExamResult | null>(null);
   const [questions, setQuestions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [analytics, setAnalytics] = useState<any>(null);
   const [securityEvents, setSecurityEvents] = useState<any[]>([]);
 
   useEffect(() => {
@@ -60,6 +56,7 @@ const ExamResults = () => {
           passed,
           start_time,
           end_time,
+          answers,
           is_terminated,
           termination_reason,
           violation_details,
@@ -84,12 +81,11 @@ const ExamResults = () => {
 
       setResult(data as unknown as ExamResult);
 
-      // Load attempt analytics (security events, device logs, etc.)
+      // Load attempt analytics (security events)
       const analyticsData = await getAttemptAnalytics(attemptId!);
-      setAnalytics(analyticsData);
       setSecurityEvents(analyticsData.securityEvents || []);
 
-      // fetch questions for review
+      // Fetch questions for review
       try {
         if (data.exam && typeof data.exam === 'object' && 'id' in data.exam) {
           const { data: qData, error: qError } = await supabase
@@ -118,6 +114,11 @@ const ExamResults = () => {
     const minutes = Math.floor(diff / 60000);
     const seconds = Math.floor((diff % 60000) / 1000);
     return `${minutes}m ${seconds}s`;
+  };
+
+  const formatTime = (dateString: string) => {
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
   };
 
   const isCorrect = (question: any, userAnswer: any) => {
@@ -156,14 +157,8 @@ const ExamResults = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="bg-gradient-to-br from-violet-600 via-cyan-400 to-amber-300 min-h-screen flex items-center justify-center p-4">
-        <Card className="p-8 bg-white/10 backdrop-blur-md border-white/20 rounded-3xl shadow-2xl text-center">
-          <div className="animate-pulse">
-            <div className="w-16 h-16 bg-white/20 rounded-full mx-auto mb-4"></div>
-            <div className="h-4 bg-white/20 rounded w-48 mx-auto mb-2"></div>
-            <div className="h-3 bg-white/20 rounded w-32 mx-auto"></div>
-          </div>
-        </Card>
+      <div className="min-h-screen bg-background-light dark:bg-background-dark flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
       </div>
     );
   }
@@ -174,219 +169,296 @@ const ExamResults = () => {
 
   const score = result.score || 0;
   const passed = result.passed;
+  const userAnswers = (result as any).answers || {};
+
+  // Count correct and incorrect answers
+  const correctCount = questions.filter(q => isCorrect(q, userAnswers[q.id])).length;
+  const incorrectCount = questions.length - correctCount;
+  const timeTaken = getTimeTaken();
+
+  // Calculate circle progress (circumference = 2 * PI * 84 ≈ 527)
+  const circumference = 2 * Math.PI * 84;
+  const strokeDashoffset = circumference - (score / 100) * circumference;
 
   return (
-    <div className="bg-gradient-to-br from-violet-600 via-cyan-400 to-amber-300 min-h-screen font-display flex items-center justify-center p-4 text-slate-800 antialiased">
-      <main className="w-full max-w-[400px] bg-white dark:bg-gray-800 rounded-3xl shadow-2xl overflow-hidden relative animate-pop-in flex flex-col">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-green-500 via-violet-500 to-green-500 opacity-50"></div>
+    <div className="min-h-screen bg-background-light dark:bg-background-dark p-4 lg:p-8">
+      <div className="max-w-5xl w-full grid grid-cols-1 lg:grid-cols-12 gap-8 mx-auto">
         
-        <div className="p-8 pb-4 flex flex-col items-center text-center space-y-6 flex-grow">
-          {/* Trophy Animation */}
-          <div className="relative group">
-            <div className="w-24 h-24 rounded-full bg-green-100 dark:bg-green-900/30 flex items-center justify-center mb-2 animate-float">
-              <span className="material-icons-round text-5xl text-green-500 drop-shadow-sm">emoji_events</span>
-            </div>
-            <span className="material-icons-round text-yellow-400 absolute -top-2 -right-2 text-xl animate-pulse" style={{animationDelay: '0.2s'}}>auto_awesome</span>
-            <span className="material-icons-round text-yellow-400 absolute bottom-0 -left-2 text-sm animate-pulse" style={{animationDelay: '0.5s'}}>star</span>
-          </div>
-
-          {/* Title */}
-          <div className="space-y-2">
-            <h1 className={`text-3xl font-bold tracking-tight ${
-              passed ? 'text-green-500 dark:text-green-400' : 'text-red-500 dark:text-red-400'
-            }`}>
-              {passed ? 'Congratulations!' : 'Exam Completed'}
-            </h1>
-            <p className="text-slate-500 dark:text-slate-400 text-sm font-medium leading-relaxed">
-              {passed 
-                ? 'You have successfully passed the exam!' 
-                : 'Keep practicing to improve your score!'}
-            </p>
-          </div>
-
-          {/* Exam Badge */}
-          <div className="text-slate-800 dark:text-slate-200 font-semibold tracking-wide uppercase text-xs bg-slate-100 dark:bg-slate-700/50 px-3 py-1 rounded-full">
-            {result.exam.title}
-          </div>
-
-          {/* Score Display */}
-          <div className="w-full space-y-2">
-            <div className="text-6xl font-extrabold text-slate-900 dark:text-white tracking-tighter tabular-nums">
-              {score.toFixed(1)}<span className="text-3xl text-slate-400">%</span>
-            </div>
-            <div className="relative h-3 w-full bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden mt-2">
-              <div 
-                className={`absolute top-0 left-0 h-full rounded-full shadow-[0_0_10px_rgba(34,197,94,0.5)] transition-all duration-1000 ${
-                  passed ? 'bg-gradient-to-r from-green-500 to-green-400' : 'bg-gradient-to-r from-red-500 to-red-400'
-                }`}
-                style={{ width: `${score}%` }}
-              ></div>
-            </div>
-            <p className="text-xs text-slate-400 dark:text-slate-500 font-medium pt-1">
-              Passing score: {result.exam.pass_threshold}%
-            </p>
-          </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-2 gap-4 w-full pt-2">
-            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-2xl p-4 flex flex-col items-center justify-center space-y-1 transition hover:scale-[1.02] cursor-default">
-              <div className="flex items-center space-x-1 text-slate-400 dark:text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">
-                <span className="material-icons-round text-sm">schedule</span>
-                <span>Time</span>
+        {/* Left Column - Results Card */}
+        <div className="lg:col-span-5 flex flex-col gap-6">
+          
+          {/* Main Congratulations Card */}
+          <div className="bg-card-light dark:bg-card-dark rounded-2xl shadow-soft p-8 relative overflow-hidden">
+            <div className="absolute top-0 right-0 -mt-10 -mr-10 w-40 h-40 bg-soft-green dark:bg-emerald-900/20 rounded-full blur-3xl opacity-50"></div>
+            
+            <div className="flex flex-col items-center text-center relative z-10">
+              {/* Trophy Icon */}
+              <div className={`w-20 h-20 rounded-2xl flex items-center justify-center shadow-glow mb-6 transform transition hover:scale-105 duration-300 ${
+                passed 
+                  ? 'bg-gradient-to-br from-emerald-400 to-emerald-600' 
+                  : 'bg-gradient-to-br from-orange-400 to-red-500'
+              }`}>
+                <span className="material-icons-round text-white text-4xl">
+                  {passed ? 'emoji_events' : 'school'}
+                </span>
               </div>
-              <span className="text-slate-800 dark:text-white font-bold text-lg">{getTimeTaken()}</span>
+              
+              <h1 className="text-3xl font-extrabold text-gray-900 dark:text-white mb-2">
+                {passed ? 'Congratulations!' : 'Exam Completed'}
+              </h1>
+              <p className="text-text-muted-light dark:text-text-muted-dark mb-6 text-sm leading-relaxed max-w-xs mx-auto">
+                {passed 
+                  ? 'You have successfully passed the exam! Great job on your performance.'
+                  : 'Keep practicing to improve your score. Every attempt is a learning opportunity!'}
+              </p>
+              
+              {/* Exam Badge */}
+              <div className="inline-flex items-center px-4 py-1.5 rounded-full bg-gray-100 dark:bg-gray-800 text-xs font-bold uppercase tracking-wider text-gray-600 dark:text-gray-300 mb-8 border border-gray-200 dark:border-gray-700">
+                {result.exam.title}
+              </div>
+              
+              {/* Score Circle */}
+              <div className="relative w-48 h-48 mb-8 flex items-center justify-center">
+                <div className={`absolute inset-0 rounded-full blur-2xl transform scale-110 ${
+                  passed ? 'bg-emerald-500/10' : 'bg-orange-500/10'
+                }`}></div>
+                <svg className="transform -rotate-90 w-full h-full drop-shadow-sm" viewBox="0 0 200 200">
+                  <defs>
+                    <linearGradient id="scoreGradient" x1="0%" x2="100%" y1="0%" y2="100%">
+                      <stop offset="0%" style={{ stopColor: passed ? '#34d399' : '#fb923c', stopOpacity: 1 }}></stop>
+                      <stop offset="100%" style={{ stopColor: passed ? '#059669' : '#dc2626', stopOpacity: 1 }}></stop>
+                    </linearGradient>
+                  </defs>
+                  <circle 
+                    className="dark:stroke-gray-800" 
+                    cx="100" cy="100" 
+                    fill="none" r="84" 
+                    stroke="#f1f5f9" 
+                    strokeWidth="10"
+                  ></circle>
+                  <circle 
+                    cx="100" cy="100" 
+                    fill="none" r="84" 
+                    stroke="url(#scoreGradient)" 
+                    strokeDasharray={circumference}
+                    strokeDashoffset={strokeDashoffset}
+                    strokeLinecap="round" 
+                    strokeWidth="14"
+                    className="transition-all duration-1000 ease-out"
+                    style={{ filter: `drop-shadow(0px 4px 6px rgba(${passed ? '16, 185, 129' : '249, 115, 22'}, 0.25))` }}
+                  ></circle>
+                </svg>
+                <div className="absolute flex flex-col items-center justify-center pb-2">
+                  <span className="text-6xl font-black text-transparent bg-clip-text bg-gradient-to-br from-gray-900 to-gray-600 dark:from-white dark:to-gray-300 tracking-tight">
+                    {score.toFixed(0)}
+                  </span>
+                  <span className={`text-xl font-bold -mt-1 ${
+                    passed ? 'text-emerald-600 dark:text-emerald-400' : 'text-orange-500 dark:text-orange-400'
+                  }`}>%</span>
+                </div>
+              </div>
+              
+              {/* Progress Bar */}
+              <div className="w-full max-w-xs mb-2">
+                <div className="h-2 w-full bg-gray-100 dark:bg-gray-800 rounded-full overflow-hidden shadow-inner">
+                  <div 
+                    className={`h-full rounded-full transition-all duration-1000 ${
+                      passed 
+                        ? 'bg-gradient-to-r from-emerald-400 to-emerald-600' 
+                        : 'bg-gradient-to-r from-orange-400 to-red-500'
+                    }`}
+                    style={{ width: `${score}%` }}
+                  ></div>
+                </div>
+                <div className="flex justify-between mt-2 text-xs font-medium text-text-muted-light dark:text-text-muted-dark">
+                  <span>Score</span>
+                  <span>Passing: {result.exam.pass_threshold}%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          {/* Stats Grid */}
+          <div className="grid grid-cols-3 gap-4">
+            <div className="bg-card-light dark:bg-card-dark rounded-xl p-4 shadow-soft text-center border-b-4 border-emerald-500">
+              <div className="mb-2 inline-flex p-2 rounded-full bg-soft-green dark:bg-emerald-900/30">
+                <span className="material-icons-round text-emerald-600 dark:text-emerald-400 text-lg">check_circle</span>
+              </div>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">{correctCount}</div>
+              <div className="text-xs font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-wide">Correct</div>
             </div>
             
-            <div className="bg-slate-50 dark:bg-slate-700/50 rounded-2xl p-4 flex flex-col items-center justify-center space-y-1 transition hover:scale-[1.02] cursor-default">
-              <div className="flex items-center space-x-1 text-slate-400 dark:text-slate-400 text-xs uppercase font-bold tracking-wider mb-1">
-                <span className="material-icons-round text-sm">check_circle</span>
-                <span>Status</span>
+            <div className="bg-card-light dark:bg-card-dark rounded-xl p-4 shadow-soft text-center border-b-4 border-red-400">
+              <div className="mb-2 inline-flex p-2 rounded-full bg-soft-red dark:bg-red-900/30">
+                <span className="material-icons-round text-red-500 dark:text-red-400 text-lg">cancel</span>
               </div>
-              <span className={`font-bold text-lg ${passed ? 'text-green-500' : 'text-red-500'}`}>
-                {passed ? 'Passed' : 'Failed'}
-              </span>
+              <div className="text-2xl font-bold text-gray-900 dark:text-white">{incorrectCount}</div>
+              <div className="text-xs font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-wide">Wrong</div>
+            </div>
+            
+            <div className="bg-card-light dark:bg-card-dark rounded-xl p-4 shadow-soft text-center border-b-4 border-blue-400">
+              <div className="mb-2 inline-flex p-2 rounded-full bg-soft-blue dark:bg-blue-900/30">
+                <span className="material-icons-round text-blue-500 dark:text-blue-400 text-lg">timer</span>
+              </div>
+              <div className="text-xl font-bold text-gray-900 dark:text-white pt-1">{timeTaken}</div>
+              <div className="text-xs font-bold text-text-muted-light dark:text-text-muted-dark uppercase tracking-wide mt-1">Time</div>
             </div>
           </div>
-
-          {/* Action Button */}
-          <Button 
+          
+          {/* Continue Button */}
+          <button 
             onClick={() => navigate('/dashboard')}
-            className="w-full bg-violet-600 hover:bg-violet-700 text-white font-semibold py-4 px-6 rounded-2xl shadow-lg shadow-violet-500/30 dark:shadow-violet-900/40 transform transition hover:-translate-y-0.5 active:translate-y-0 flex items-center justify-center group mt-2"
+            className={`w-full font-bold py-4 px-6 rounded-xl shadow-lg transition-all duration-300 flex items-center justify-center gap-2 group ${
+              passed 
+                ? 'bg-primary hover:bg-emerald-600 text-white hover:shadow-emerald-500/30'
+                : 'bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white shadow-orange-500/30'
+            }`}
           >
-            <span>Continue to Dashboard</span>
-            <span className="material-icons-round ml-2 text-xl group-hover:translate-x-1 transition-transform">arrow_forward</span>
-          </Button>
-
-          {/* Divider */}
-          <div className="w-full h-px bg-slate-100 dark:bg-slate-700/50 my-2"></div>
-
-          {/* Failure/Violation Reason Section */}
+            Continue to Dashboard
+            <span className="material-icons-round text-lg group-hover:translate-x-1 transition-transform">arrow_forward</span>
+          </button>
+        </div>
+        
+        {/* Right Column - Security Events & Review */}
+        <div className="lg:col-span-7 flex flex-col gap-6 h-full">
+          
+          {/* Security Events Card */}
+          <div className="bg-card-light dark:bg-card-dark rounded-2xl shadow-soft p-6 border border-gray-100 dark:border-gray-800">
+            <div className="flex items-center gap-3 mb-4">
+              <span className="material-icons-round text-blue-500">security</span>
+              <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                Security Events ({securityEvents.length})
+              </h3>
+            </div>
+            
+            {securityEvents.length > 0 ? (
+              <div className="space-y-3">
+                {securityEvents.map((event: any, idx: number) => (
+                  <div 
+                    key={idx}
+                    className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 flex justify-between items-center border border-gray-100 dark:border-gray-700"
+                  >
+                    <div className="flex flex-col">
+                      <span className="font-bold text-sm text-gray-800 dark:text-gray-200">
+                        {event.event_type.replace(/-/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                      </span>
+                      <span className="text-xs text-text-muted-light dark:text-text-muted-dark">
+                        Triggered during exam
+                      </span>
+                    </div>
+                    <span className="text-xs font-mono bg-gray-200 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-3 py-1 rounded-md">
+                      {formatTime(event.timestamp)}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center border border-gray-100 dark:border-gray-700">
+                <span className="material-icons-round text-emerald-500 text-2xl mb-2">verified</span>
+                <p className="text-sm text-gray-600 dark:text-gray-400">
+                  No security violations detected during your exam.
+                </p>
+              </div>
+            )}
+          </div>
+          
+          {/* Termination/Violation Notice */}
           {result?.is_terminated && (
-            <div className="w-full bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-4 mb-4">
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-2xl shadow-soft p-6 border border-red-200 dark:border-red-800">
               <div className="flex items-start gap-3">
-                <span className="text-2xl mt-1">⚠️</span>
+                <span className="material-icons-round text-red-500 mt-1">warning</span>
                 <div className="flex-1">
-                  <h4 className="font-bold text-red-700 dark:text-red-400 mb-2">Exam Terminated</h4>
-                  <p className="text-sm text-red-600 dark:text-red-300 mb-3">
+                  <h4 className="font-bold text-red-600 dark:text-red-400 mb-2">Exam Terminated</h4>
+                  <p className="text-sm text-gray-700 dark:text-gray-300 mb-3">
                     {result.termination_reason || "Exam was terminated due to rule violations"}
                   </p>
                   {result.violation_details?.rules_broken && (
-                    <div className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-3 mt-2">
-                      <p className="text-xs font-semibold text-red-700 dark:text-red-400 mb-2">Rules Broken:</p>
+                    <div className="bg-white dark:bg-gray-800 rounded-xl p-3 mt-2">
+                      <p className="text-xs font-semibold text-red-500 mb-2">Rules Broken:</p>
                       <ul className="space-y-1">
                         {result.violation_details.rules_broken.map((rule: string, idx: number) => (
-                          <li key={idx} className="text-xs text-red-600 dark:text-red-300 flex items-center">
-                            <span className="material-icons-round text-sm mr-2">close</span>
+                          <li key={idx} className="text-xs text-gray-600 dark:text-gray-400 flex items-center">
+                            <span className="material-icons-round text-sm mr-2 text-red-500">close</span>
                             {rule.replace(/-/g, ' ').toUpperCase()}
                           </li>
                         ))}
                       </ul>
                     </div>
                   )}
-                  <p className="text-xs text-red-600 dark:text-red-300 mt-3 italic">
-                    This exam will be reviewed by your teacher and may affect your grade.
-                  </p>
                 </div>
               </div>
             </div>
           )}
-
-          {/* Failure Reason - Wrong Answers */}
-          {!result?.is_terminated && result?.failure_reason === 'wrong_answers' && !result?.passed && (
-            <div className="w-full bg-orange-50 dark:bg-orange-900/20 border-2 border-orange-200 dark:border-orange-800 rounded-xl p-4 mb-4">
-              <div className="flex items-start gap-3">
-                <span className="text-2xl">📚</span>
-                <div className="flex-1">
-                  <h4 className="font-bold text-orange-700 dark:text-orange-400 mb-1">Score Below Passing Threshold</h4>
-                  <p className="text-sm text-orange-600 dark:text-orange-300">
-                    You need {result.exam.pass_threshold}% to pass. Review the questions you answered incorrectly to improve.
+          
+          {/* Review Questions Card */}
+          <div className="bg-card-light dark:bg-card-dark rounded-2xl shadow-soft p-6 flex-grow flex flex-col border border-gray-100 dark:border-gray-800 overflow-hidden">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="bg-indigo-100 dark:bg-indigo-900/30 p-2 rounded-lg text-indigo-600 dark:text-indigo-400">
+                  <span className="material-icons-round">library_books</span>
+                </div>
+                <h3 className="text-lg font-bold text-gray-900 dark:text-white">
+                  Review Questions <span className="text-text-muted-light font-normal text-sm ml-1">({questions.length})</span>
+                </h3>
+              </div>
+            </div>
+            
+            <div className="overflow-y-auto custom-scrollbar pr-2 space-y-4 max-h-[400px] lg:max-h-none lg:flex-grow">
+              {questions.length === 0 ? (
+                <div className="bg-gray-50 dark:bg-gray-800/50 rounded-xl p-4 text-center">
+                  <span className="material-icons-round text-gray-400 text-3xl mb-2">quiz</span>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    No questions available for review.
                   </p>
                 </div>
-              </div>
-            </div>
-          )}
-
-          {/* Security Events Display */}
-          {securityEvents && securityEvents.length > 0 && (
-            <div className="w-full bg-blue-50 dark:bg-blue-900/20 border-2 border-blue-200 dark:border-blue-800 rounded-xl p-4 mb-4">
-              <h4 className="font-bold text-blue-700 dark:text-blue-400 mb-3 flex items-center">
-                <span className="material-icons-round mr-2">security</span>
-                Security Events ({securityEvents.length})
-              </h4>
-              <div className="space-y-2 max-h-32 overflow-y-auto">
-                {securityEvents.map((event: any, idx: number) => (
-                  <div key={idx} className="bg-white/50 dark:bg-slate-800/50 rounded-lg p-2 text-xs">
-                    <p className="font-medium text-blue-700 dark:text-blue-300">
-                      {event.event_type.replace(/-/g, ' ').toUpperCase()}
-                    </p>
-                    <p className="text-blue-600 dark:text-blue-400 text-xs">
-                      {new Date(event.timestamp).toLocaleTimeString()}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Review Section */}
-          <div className="w-full text-left pb-4">
-            <h3 className="text-slate-900 dark:text-white font-bold text-lg mb-2 flex items-center">
-              <span className="material-icons-round mr-2 text-violet-600">quiz</span>
-              Review Questions
-            </h3>
-            {questions.length === 0 ? (
-              <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-xl p-4 text-center">
-                <p className="text-slate-400 dark:text-slate-500 text-sm">
-                  No questions available for review.
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-3 max-h-60 overflow-y-auto">
-                {questions.slice(0, 5).map((q) => {
-                  const userAnswer = (result as any).answers?.[q.id];
+              ) : (
+                questions.map((q, idx) => {
+                  const userAnswer = userAnswers[q.id];
                   const correct = isCorrect(q, userAnswer);
                   return (
-                    <div key={q.id} className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-700 rounded-xl p-3">
-                      <div className="flex items-start gap-3">
-                        <div className="mt-1">
-                          {correct ? (
-                            <span className="material-icons-round text-green-500 text-lg">check_circle</span>
-                          ) : (
-                            <span className="material-icons-round text-red-500 text-lg">cancel</span>
+                    <div 
+                      key={q.id}
+                      className={`p-4 rounded-xl border border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-emerald-200 dark:hover:border-emerald-800 transition-colors group`}
+                    >
+                      <div className="flex items-start gap-4">
+                        <div className="flex-shrink-0 mt-1">
+                          <span className={`material-icons-round text-xl ${
+                            correct ? 'text-emerald-500' : 'text-red-500'
+                          }`}>
+                            {correct ? 'check_circle' : 'cancel'}
+                          </span>
+                        </div>
+                        <div className="flex-grow">
+                          <p className="text-sm font-semibold text-gray-800 dark:text-gray-100 mb-2 group-hover:text-emerald-700 dark:group-hover:text-emerald-400 transition-colors">
+                            {idx + 1}. {q.question_text}
+                          </p>
+                          <div className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-bold border ${
+                            correct 
+                              ? 'bg-soft-green dark:bg-emerald-900/20 text-emerald-600 dark:text-emerald-400 border-emerald-100 dark:border-emerald-800'
+                              : 'bg-soft-red dark:bg-red-900/20 text-red-600 dark:text-red-400 border-red-100 dark:border-red-800'
+                          }`}>
+                            <span className="material-icons-round text-xs">
+                              {correct ? 'done' : 'close'}
+                            </span>
+                            {correct ? 'Correct' : 'Incorrect'}
+                          </div>
+                          {!correct && q.question_data?.correctAnswer && (
+                            <div className="mt-2 text-xs text-gray-500 dark:text-gray-400">
+                              <span className="font-medium">Correct answer:</span> {q.question_data.correctAnswer}
+                            </div>
                           )}
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="font-medium text-slate-800 dark:text-slate-200 text-sm mb-1 truncate">
-                            {q.question_text}
-                          </p>
-                          <p className={`text-xs ${correct ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'}`}>
-                            {correct ? 'Correct' : 'Incorrect'}
-                          </p>
-                        </div>
+                        <span className="material-icons-round text-gray-300 dark:text-gray-600 group-hover:text-emerald-500 transition-colors cursor-pointer">
+                          chevron_right
+                        </span>
                       </div>
                     </div>
                   );
-                })}
-                {questions.length > 5 && (
-                  <p className="text-xs text-slate-400 dark:text-slate-500 text-center pt-2">
-                    +{questions.length - 5} more questions
-                  </p>
-                )}
-              </div>
-            )}
+                })
+              )}
+            </div>
           </div>
         </div>
-      </main>
-
-      {/* Dark Mode Toggle */}
-      <div className="fixed bottom-4 right-4 z-50">
-        <Button 
-          onClick={() => document.documentElement.classList.toggle('dark')}
-          className="bg-white dark:bg-slate-800 p-3 rounded-full shadow-lg text-slate-800 dark:text-white hover:scale-110 transition-transform border-0"
-        >
-          <span className="material-icons-round dark:hidden">dark_mode</span>
-          <span className="hidden dark:block material-icons-round">light_mode</span>
-        </Button>
       </div>
     </div>
   );

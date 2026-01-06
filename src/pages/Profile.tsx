@@ -1,8 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import SecureAvatar from "@/components/ui/secure-avatar";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -13,15 +11,10 @@ import {
   Camera,
   Loader2,
   School,
-  Users,
   UserPlus,
   LogOut,
-  BarChart3,
-  MoreVertical,
   Sparkles,
-  GraduationCap,
-  User,
-  Check
+  GraduationCap
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -34,30 +27,11 @@ interface ExamStats {
 
 
 const Profile = () => {
-  const [isLoading, setIsLoading] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [fullName, setFullName] = useState("");
   const [avatarUrl, setAvatarUrl] = useState<string | null>(null);
   const [examStats, setExamStats] = useState<ExamStats | null>(null);
   const [profileData, setProfileData] = useState<any>(null);
-
-  const [teachingType, setTeachingType] = useState('school');
-  const [formData, setFormData] = useState({
-    subject: 'English Literature',
-    experience: '5',
-    gradYear: '2020',
-    degree: 'Master of Arts'
-  });
-
-  // Professional details data for teachers (view-only)
-  const teacherProfessionalDetails = {
-    mainSubject: 'English Literature',
-    yearsActive: '5',
-    workSetting: 'Hybrid',
-    fullName: 'Ziad Khaled',
-    certification: 'Master of Arts',
-    graduationYear: '2020'
-  };
   
   const { toast } = useToast();
   const navigate = useNavigate();
@@ -184,40 +158,6 @@ const Profile = () => {
     }
   };
 
-  const handleUpdateProfile = async () => {
-    if (!user?.id) return;
-    setIsLoading(true);
-
-    try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ 
-          full_name: fullName,
-          teaching_type: teachingType,
-          subject: formData.subject,
-          experience: formData.experience,
-          grad_year: formData.gradYear,
-          degree: formData.degree
-        })
-        .eq('user_id', user.id);
-
-      if (error) throw error;
-
-      toast({
-        title: "Success",
-        description: "Profile updated successfully!",
-      });
-    } catch (error: any) {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   const handleSignOut = async () => {
     await signOut();
     navigate('/');
@@ -325,196 +265,6 @@ const Profile = () => {
               </div>
             </div>
           </div>
-
-          {/* Professional Details Section */}
-          <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-            <h3 className="text-xl font-black text-gray-900 mb-6">Professional Details</h3>
-            
-            <div className="space-y-6">
-              {isTeacher ? (
-                // View-only professional details for teachers
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  <div className="bg-slate-50 rounded-xl p-5 border border-slate-100">
-                    <div className="flex items-center mb-3">
-                      <div className="w-10 h-10 bg-[#7C3AED]/10 rounded-lg flex items-center justify-center mr-3">
-                        <GraduationCap className="text-[#7C3AED] w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Main Subject</p>
-                        <p className="font-bold text-gray-900 text-lg">{teacherProfessionalDetails.mainSubject}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-slate-50 rounded-xl p-5 border border-slate-100">
-                    <div className="flex items-center mb-3">
-                      <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mr-3">
-                        <BarChart3 className="text-emerald-600 w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Years Active</p>
-                        <p className="font-bold text-gray-900 text-lg">{teacherProfessionalDetails.yearsActive}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 md:col-span-2">
-                    <div className="flex items-center mb-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mr-3">
-                        <Users className="text-blue-600 w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Work Setting</p>
-                        <p className="font-bold text-gray-900 text-lg">{teacherProfessionalDetails.workSetting}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-slate-50 rounded-xl p-5 border border-slate-100">
-                    <div className="flex items-center mb-3">
-                      <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center mr-3">
-                        <User className="text-purple-600 w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Full Name</p>
-                        <p className="font-bold text-gray-900 text-lg">{teacherProfessionalDetails.fullName}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-slate-50 rounded-xl p-5 border border-slate-100">
-                    <div className="flex items-center mb-3">
-                      <div className="w-10 h-10 bg-amber-100 rounded-lg flex items-center justify-center mr-3">
-                        <Sparkles className="text-amber-600 w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Certification/Degree</p>
-                        <p className="font-bold text-gray-900 text-lg">{teacherProfessionalDetails.certification}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-slate-50 rounded-xl p-5 border border-slate-100 md:col-span-2">
-                    <div className="flex items-center mb-3">
-                      <div className="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center mr-3">
-                        <Check className="text-rose-600 w-5 h-5" />
-                      </div>
-                      <div>
-                        <p className="text-xs font-black text-gray-400 uppercase tracking-widest">Graduation Year</p>
-                        <p className="font-bold text-gray-900 text-lg">{teacherProfessionalDetails.graduationYear}</p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                // Editable form for students
-                <>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-black text-gray-400 uppercase tracking-widest">Main Subject</Label>
-                      <Input 
-                        type="text" 
-                        value={formData.subject}
-                        onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                        className="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl focus:border-[#7C3AED] focus:bg-white focus:ring-4 focus:ring-[#7C3AED]/10 transition-all outline-none font-bold"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-black text-gray-400 uppercase tracking-widest">Years Active</Label>
-                      <Input 
-                        type="number" 
-                        value={formData.experience}
-                        onChange={(e) => setFormData({...formData, experience: e.target.value})}
-                        className="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl focus:border-[#7C3AED] focus:bg-white focus:ring-4 focus:ring-[#7C3AED]/10 transition-all outline-none font-bold"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs font-black text-gray-400 uppercase tracking-widest">Work Setting</Label>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      {[
-                        { id: 'school', label: 'Institution', icon: School },
-                        { id: 'private', label: 'Freelance', icon: User },
-                        { id: 'both', label: 'Hybrid', icon: Users }
-                      ].map((type) => (
-                        <button
-                          key={type.id}
-                          onClick={() => setTeachingType(type.id)}
-                          className={`flex flex-col items-center p-4 rounded-2xl border-2 transition-all relative ${
-                            teachingType === type.id 
-                              ? 'border-[#7C3AED] bg-[#7C3AED]/5' 
-                              : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50'
-                          }`}
-                        >
-                          {teachingType === type.id && (
-                            <div className="absolute top-2 right-2 text-[#7C3AED]">
-                              <Check size={14} />
-                            </div>
-                          )}
-                          <type.icon size={20} className={teachingType === type.id ? 'text-[#7C3AED]' : 'text-gray-400'} />
-                          <span className={`text-[10px] font-black uppercase tracking-tight mt-2 ${teachingType === type.id ? 'text-[#7C3AED]' : 'text-gray-500'}`}>
-                            {type.label}
-                          </span>
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs font-black text-gray-400 uppercase tracking-widest">Full Name</Label>
-                    <Input
-                      value={fullName}
-                      onChange={(e) => setFullName(e.target.value)}
-                      className="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl focus:border-[#7C3AED] focus:bg-white focus:ring-4 focus:ring-[#7C3AED]/10 transition-all outline-none font-bold"
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="space-y-2">
-                      <Label className="text-xs font-black text-gray-400 uppercase tracking-widest">Certification / Degree</Label>
-                      <Input 
-                        type="text" 
-                        value={formData.degree}
-                        onChange={(e) => setFormData({...formData, degree: e.target.value})}
-                        className="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl focus:border-[#7C3AED] focus:bg-white outline-none transition-all font-bold"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-xs font-black text-gray-400 uppercase tracking-widest">Graduation Year</Label>
-                      <Input 
-                        type="number" 
-                        value={formData.gradYear}
-                        onChange={(e) => setFormData({...formData, gradYear: e.target.value})}
-                        className="w-full px-5 py-3 bg-gray-50 border-2 border-transparent rounded-2xl focus:border-[#7C3AED] focus:bg-white outline-none transition-all font-bold"
-                      />
-                    </div>
-                  </div>
-
-                  <div className="pt-4">
-                    <Button
-                      onClick={handleUpdateProfile}
-                      disabled={isLoading}
-                      className="w-full py-4 bg-[#7C3AED] text-white font-black rounded-2xl shadow-2xl shadow-[#7C3AED]/30 hover:scale-[1.02] active:scale-[0.98] transition-all flex items-center justify-center space-x-3 disabled:opacity-50"
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                          <span>Updating Profile...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Update Profile</span>
-                          <Sparkles size={20} />
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-
 
         </div>
       </div>

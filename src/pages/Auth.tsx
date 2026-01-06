@@ -38,6 +38,8 @@ const Auth = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
   
+  const [activeTab, setActiveTab] = useState('signin');
+  
   const { toast } = useToast();
   const navigate = useNavigate();
   const { isAuthenticated, needsOnboarding, isTeacher } = useAuth();
@@ -227,7 +229,7 @@ const Auth = () => {
             <h1 className="text-4xl font-black text-gray-900 mb-2 tracking-tight">Welcome to Do Stuff</h1>
             <p className="text-gray-500 font-medium mb-10">Create or join exams easily</p>
 
-            <Tabs defaultValue="signin" className="w-full">
+            <Tabs defaultValue="signin" value={activeTab} onValueChange={setActiveTab} className="w-full">
               <TabsList className="grid w-full grid-cols-2 bg-[#F1F5F9] p-1.5 rounded-[1.5rem] mb-10">
                 <TabsTrigger 
                   value="signin" 
@@ -444,7 +446,11 @@ const Auth = () => {
 
             <div className="mt-12 text-center">
               <p className="text-sm font-bold text-gray-500">
-                Don't have an account? <button onClick={() => navigate('/teacher-onboarding')} className="text-[#7C3AED] font-black">Register Now</button>
+                {activeTab === 'signin' ? (
+                  <>Don't have an account? <button onClick={() => setActiveTab('signup')} className="text-[#7C3AED] font-black hover:underline">Register Now</button></>
+                ) : (
+                  <>Already have an account? <button onClick={() => setActiveTab('signin')} className="text-[#7C3AED] font-black hover:underline">Sign In</button></>
+                )}
               </p>
             </div>
           </div>

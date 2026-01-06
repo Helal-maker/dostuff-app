@@ -28,9 +28,8 @@ import {
   ChevronDown,
   BarChart3,
   BookOpen,
-  Download,
+  Link,
   MessageSquare,
-  Settings,
   ArrowUpDown,
   Loader2,
   Trophy,
@@ -125,16 +124,10 @@ const Exams = () => {
     try {
       setLoading(true);
       
-      // First get the exams with teacher profile
+      // First get the exams (without join since foreign key doesn't exist)
       const { data: examsData, error: examsError } = await supabase
         .from('exams')
-        .select(`
-          *,
-          teacher_profile:profiles!exams_teacher_id_fkey (
-            full_name,
-            subject
-          )
-        `)
+        .select('*')
         .eq('teacher_id', user?.id)
         .order('created_at', { ascending: false });
 
@@ -165,6 +158,18 @@ const Exams = () => {
 
       if (attemptsError) throw attemptsError;
 
+      // Get the teacher's profile for subject info
+      const { data: teacherProfile, error: profileError } = await supabase
+        .from('profiles')
+        .select('full_name, subject')
+        .eq('user_id', user?.id)
+        .single();
+
+      if (profileError && profileError.code !== 'PGRST116') {
+        // Log warning but don't fail - profile might not exist
+        console.warn('Could not fetch teacher profile:', profileError);
+      }
+
       // Process data to add metrics
       const examsWithMetrics = examsData.map(exam => {
         const examQuestions = questionsData?.filter(q => q.exam_id === exam.id) || [];
@@ -184,7 +189,11 @@ const Exams = () => {
             : 0,
           pass_rate: examAttempts.length > 0
             ? Math.round((passedCount / examAttempts.length) * 100)
-            : 0
+            : 0,
+          teacher_profile: teacherProfile ? {
+            full_name: teacherProfile.full_name || '',
+            subject: teacherProfile.subject || ''
+          } : undefined
         };
       });
 
@@ -581,16 +590,7 @@ const Exams = () => {
                       title="Copy share link"
                       className="border-slate-200 hover:bg-slate-50 rounded-xl"
                     >
-                      <Download className="w-4 h-4" />
-                    </Button>
-                    <Button
-                      onClick={() => navigate(`/create-exam?edit=${exam.id}`)}
-                      variant="outline"
-                      size="sm"
-                      title="Edit exam"
-                      className="border-slate-200 hover:bg-slate-50 rounded-xl"
-                    >
-                      <Settings className="w-4 h-4" />
+                      <Link className="w-4 h-4" />
                     </Button>
                   </div>
                 </CardContent>
