@@ -350,8 +350,8 @@ const CreateExam = () => {
                 <p className="text-gray-500 font-medium max-w-sm mx-auto mb-10 text-sm">
                   Select a question type from the left sidebar to begin building your professional assessment.
                 </p>
-                <button 
-                  onClick={() => setIsSidebarOpen(true)}
+                <button
+                  onClick={() => addQuestion()}
                   className="bg-white border-2 border-dashed border-[#7C3AED]/30 text-[#7C3AED] px-10 py-4 rounded-3xl font-black text-sm hover:bg-[#7C3AED]/5 transition-all shadow-sm active:scale-95"
                 >
                   + Add First Element
@@ -399,16 +399,7 @@ const CreateExam = () => {
                         />
                       </div>
 
-                      <div className="mt-10 pt-6 border-t border-gray-100 flex items-center justify-between">
-                        <div className="flex items-center bg-gray-50 px-3 py-1.5 rounded-xl border border-gray-100">
-                          <span className="text-[9px] font-black text-gray-400 uppercase tracking-widest mr-2">Weight</span>
-                          <input 
-                            type="number" 
-                            value={q.points}
-                            onChange={(e) => updateQuestion(q.id, { points: parseInt(e.target.value) || 0 })}
-                            className="w-10 bg-transparent border-none text-center font-black text-gray-900 p-0 text-sm focus:ring-0"
-                          />
-                        </div>
+                      <div className="mt-6 flex items-center justify-end">
                         <GripVertical size={20} className="text-gray-300 cursor-grab" />
                       </div>
                     </div>

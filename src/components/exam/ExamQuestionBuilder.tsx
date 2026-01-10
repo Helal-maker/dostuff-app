@@ -623,72 +623,34 @@ const ExamQuestionBuilder = ({ question, onUpdate, onRemove, language, isDragDis
 
         {/* Content */}
         <CollapsibleContent className="p-6 space-y-8">
-          {/* Question Type Selection */}
-          <div className="space-y-4">
-            <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300">Question Type</Label>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {questionTypes.map((type) => {
-                const IconComponent = type.icon;
-                const isSelected = question.type === type.value;
-                
-                return (
-                  <button
-                    key={type.value}
-                    onClick={() => onUpdate({ type: type.value as Question["type"], data: {} })}
-                    className={`p-4 rounded-xl border-2 text-left transition-all duration-200 ${
-                      isSelected
-                        ? `${type.bgColor} ${type.textColor} border-current shadow-md transform scale-[1.02]`
-                        : 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 hover:border-gray-300 dark:hover:border-gray-600 hover:shadow-sm'
-                    }`}
-                  >
-                    <div className="flex items-start gap-3">
-                      <div className={`p-2 rounded-lg ${
-                        isSelected ? 'bg-white/50' : 'bg-gray-100 dark:bg-gray-700'
-                      }`}>
-                        <IconComponent className="w-5 h-5" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <h3 className="font-semibold text-sm mb-1">{type.label}</h3>
-                        <p className="text-xs opacity-80">{type.description}</p>
-                      </div>
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Basic Settings */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-                Points <span className="text-red-500">*</span>
+          {/* Question Text - Primary Field */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-lg font-bold text-gray-900 dark:text-gray-100">
+                Question Text <span className="text-red-500">*</span>
               </Label>
-              <div className="relative">
-                <Hash className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-4 h-4" />
-                <Input
-                  type="number"
-                  value={question.points}
-                  onChange={(e) => onUpdate({ points: parseInt(e.target.value) || 1 })}
-                  min="1"
-                  max="100"
-                  className="pl-10 border-gray-200 dark:border-gray-600 focus:border-violet-500 focus:ring-violet-500"
-                  placeholder="1"
-                />
+              <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 bg-violet-50 dark:bg-violet-900/20 px-3 py-1.5 rounded-lg border border-violet-200 dark:border-violet-800">
+                  <Hash className="w-4 h-4 text-violet-500" />
+                  <Label className="text-sm font-semibold text-violet-700 dark:text-violet-300">Points</Label>
+                  <Input
+                    type="number"
+                    value={question.points}
+                    onChange={(e) => onUpdate({ points: parseInt(e.target.value) || 1 })}
+                    min="1"
+                    max="100"
+                    className="w-16 h-6 text-center bg-white dark:bg-gray-800 border-violet-200 dark:border-violet-700 focus:border-violet-500 focus:ring-violet-500 text-sm"
+                    placeholder="1"
+                  />
+                </div>
               </div>
             </div>
-          </div>
-
-          <div className="space-y-2">
-            <Label className="text-sm font-semibold text-gray-700 dark:text-gray-300">
-              Question Text <span className="text-red-500">*</span>
-            </Label>
             <Textarea
               value={question.text}
               onChange={(e) => onUpdate({ text: e.target.value })}
-              placeholder="Enter your question here..."
-              rows={3}
-              className="border-gray-200 dark:border-gray-600 focus:border-violet-500 focus:ring-violet-500 resize-none"
+              placeholder="What is the question prompt?"
+              rows={4}
+              className="border-gray-200 dark:border-gray-600 focus:border-violet-500 focus:ring-violet-500 resize-none text-base"
             />
             <div className="flex justify-between items-center text-xs text-gray-500">
               <span>Be clear and specific with your question</span>

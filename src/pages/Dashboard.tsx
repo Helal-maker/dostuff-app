@@ -622,10 +622,10 @@ const Dashboard = () => {
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredRecentActivity.map((item, i) => (
-            <div 
-              key={i} 
+            <div
+              key={i}
               className="group flex flex-col lg:flex-row items-stretch justify-between bg-[#F8FAFC] rounded-[2rem] border-2 border-transparent hover:border-[#10B981]/10 hover:bg-white transition-all duration-300 p-2 shadow-sm hover:shadow-xl cursor-pointer"
-              onClick={() => navigate(isTeacher ? `/exams/${item.title}` : `/results`)}
+              onClick={() => navigate(isTeacher ? '/exams' : '/results')}
             >
               <div className="flex items-center space-x-6 p-4 md:p-6 flex-1 min-w-0">
                 <div className="shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-xl transition-transform group-hover:scale-110 text-yellow-600 bg-yellow-100 shadow-inner">

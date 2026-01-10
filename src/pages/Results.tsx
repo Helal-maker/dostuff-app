@@ -352,70 +352,118 @@ const Results = () => {
   const processExamData = () => {
     const isTeacher = user?.user_metadata?.role === 'teacher' || user?.app_metadata?.role === 'teacher';
     
-    // Group attempts by date (for students) or by exam creation date (for teachers)
+    // Group attempts by date
     const examCountsByDate = new Map<string, number>();
     const examScoresByDate = new Map<string, number[]>();
     
-    if (isTeacher) {
-      // For teachers: group by exam creation date
-      attempts.forEach(attempt => {
-        const date = new Date(attempt.end_time).toISOString().split('T')[0];
-        examCountsByDate.set(date, (examCountsByDate.get(date) || 0) + 1);
-      });
-    } else {
-      // For students: group by exam completion date
-      attempts.forEach(attempt => {
-        const date = new Date(attempt.end_time).toISOString().split('T')[0];
-        examCountsByDate.set(date, (examCountsByDate.get(date) || 0) + 1);
-        // Track scores for performance calculation
-        if (attempt.score !== null) {
-          const scores = examScoresByDate.get(date) || [];
-          scores.push(attempt.score);
-          examScoresByDate.set(date, scores);
-        }
-      });
-    }
+    attempts.forEach(attempt => {
+      // Use local date string to avoid timezone issues
+      const date = new Date(attempt.end_time);
+      const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      
+      examCountsByDate.set(dateString, (examCountsByDate.get(dateString) || 0) + 1);
+      
+      // Track scores for performance calculation
+      if (attempt.score !== null && attempt.score !== undefined) {
+        const scores = examScoresByDate.get(dateString) || [];
+        scores.push(attempt.score);
+        examScoresByDate.set(dateString, scores);
+      }
+    });
 
-    // Get the date range for the last 100 days - dynamically calculated
+    // Use 91 days (13 weeks) for proper week alignment
+    const DAYS_TO_SHOW = 91;
+    
+    // Get today's date at midnight in LOCAL time (not UTC)
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const dates = [];
-    for (let i = 99; i >= 0; i--) {
-      const date = new Date(today);
-      date.setDate(date.getDate() - i);
-      dates.push(date.toISOString().split('T')[0]);
+    
+    // Calculate the start date (91 days ago, aligned to start on a Monday)
+    const startDate = new Date(today);
+    startDate.setDate(startDate.getDate() - (DAYS_TO_SHOW - 1));
+    
+    // Adjust to start on Monday
+    const dayOfWeek = startDate.getDay();
+    const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+    startDate.setDate(startDate.getDate() - daysToMonday);
+    
+    // Recalculate total days to show (from adjusted Monday to today)
+    const totalDays = Math.ceil((today.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    
+    const dates: string[] = [];
+    for (let i = 0; i < totalDays; i++) {
+      const date = new Date(startDate);
+      date.setDate(date.getDate() + i);
+      // Use local date formatting to avoid timezone issues
+      const dateString = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+      dates.push(dateString);
     }
 
     // Find max exams per day for opacity scaling
     const maxExamsPerDay = Math.max(...Array.from(examCountsByDate.values()), 1);
     
+    // Get today's date string for comparison
+    const todayString = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`;
+    
     // Create exam data array for the grid
-    const examData = dates.map(dateString => {
+    const examData = dates.map((dateString, index) => {
       const examCount = examCountsByDate.get(dateString) || 0;
-      const date = new Date(dateString);
-      const isToday = dateString === today.toISOString().split('T')[0];
+      const dateParts = dateString.split('-');
+      const date = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+      const isToday = dateString === todayString;
+      const isFuture = date > today;
       
       // Calculate average score for the day
       const scores = examScoresByDate.get(dateString) || [];
       const avgScore = scores.length > 0 
-        ? scores.reduce((sum, s) => sum + s, 0) / scores.length 
+        ? Math.round(scores.reduce((sum, s) => sum + s, 0) / scores.length)
         : 0;
+      
+      // Determine which week this day belongs to
+      const weekIndex = Math.floor(index / 7);
+      const dayIndex = index % 7;
       
       return {
         date,
         dateString,
         examCount,
         isToday,
+        isFuture,
         hasExams: examCount > 0,
         avgScore,
-        opacity: examCount > 0 ? 0.4 + (examCount / maxExamsPerDay) * 0.6 : 0.3
+        weekIndex,
+        dayIndex,
+        opacity: isFuture ? 0.15 : examCount > 0 ? 0.4 + (examCount / maxExamsPerDay) * 0.6 : 0.3
       };
     });
 
-    return { examData, isTeacher, examCountsByDate, examScoresByDate };
+    // Calculate weeks for the grid layout
+    const weeks: typeof examData[] = [];
+    for (let i = 0; i < examData.length; i += 7) {
+      weeks.push(examData.slice(i, i + 7));
+    }
+
+    // Get month labels for display
+    const monthLabels: { label: string; weekIndex: number }[] = [];
+    let lastMonth = -1;
+    weeks.forEach((week, weekIndex) => {
+      const firstDayOfWeek = week[0];
+      if (firstDayOfWeek) {
+        const month = firstDayOfWeek.date.getMonth();
+        if (month !== lastMonth) {
+          monthLabels.push({
+            label: firstDayOfWeek.date.toLocaleDateString('en-US', { month: 'short' }),
+            weekIndex
+          });
+          lastMonth = month;
+        }
+      }
+    });
+
+    return { examData, weeks, monthLabels, isTeacher, examCountsByDate, examScoresByDate, todayString };
   };
 
-  const { examData, isTeacher } = processExamData();
+  const { examData, weeks, monthLabels, isTeacher, todayString } = processExamData();
   const todayData = examData.find(d => d.isToday);
 
   const chartConfig = {

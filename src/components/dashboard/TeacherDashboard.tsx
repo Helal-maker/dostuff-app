@@ -44,6 +44,8 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
   const [exams, setExams] = useState<Exam[]>([]);
   const [loading, setLoading] = useState(true);
   const [flaggedAttempts, setFlaggedAttempts] = useState<any[]>([]);
+  const [totalStudents, setTotalStudents] = useState(0);
+  const [activeExams, setActiveExams] = useState(0);
   const navigate = useNavigate();
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -96,6 +98,19 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
       // Get exam IDs for batch queries
       const examIds = examsData.map(exam => exam.id);
 
+      // Get all attempts for unique students count
+      const { data: allAttemptsData, error: allAttemptsError } = await supabase
+        .from('exam_attempts')
+        .select('student_id')
+        .in('exam_id', examIds);
+
+      if (allAttemptsError) {
+        console.error('Error fetching attempts for students:', allAttemptsError);
+      } else if (allAttemptsData) {
+        const uniqueStudents = new Set(allAttemptsData.map(a => a.student_id));
+        setTotalStudents(uniqueStudents.size);
+      }
+
       // Get questions count for each exam
       const { data: questionsData, error: questionsError } = await supabase
         .from('questions')
@@ -127,6 +142,10 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
       });
 
       setExams(examsWithCounts);
+
+      // Calculate active exams (published with attempts)
+      const active = examsWithCounts.filter(exam => exam.is_published && (exam._count?.attempts || 0) > 0).length;
+      setActiveExams(active);
     } catch (error) {
       console.error('Error fetching exams:', error);
       toast({
@@ -243,19 +262,13 @@ const TeacherDashboard = ({ user }: TeacherDashboardProps) => {
       {/* Responsive Stats Grid */}
       <DashboardStatsGrid
         stats={createExamStats({
-          totalExams: exams.length,
+          totalStudents,
+          activeExams,
           publishedExams: exams.filter(exam => exam.is_published).length,
-          draftExams: exams.filter(exam => !exam.is_published).length,
           totalAttempts: exams.reduce((acc, exam) => acc + (exam._count?.attempts || 0), 0),
-          averageScore: exams.length > 0 ? Math.round(
-            exams.reduce((acc, exam) => {
-              // This would need to be calculated from actual scores
-              return acc + (exam._count?.attempts ? 75 : 0); // Placeholder calculation
-            }, 0) / exams.length
-          ) : undefined
         })}
-        layout="two-up-one-down"
-        className="mb-8"
+        layout="custom"
+        className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8"
       />
 
       {/* Flagged Attempts Section */}

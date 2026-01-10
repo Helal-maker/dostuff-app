@@ -202,60 +202,44 @@ const DashboardStatsGrid: React.FC<DashboardStatsGridProps> = ({
 
 // Pre-defined stat configurations for common use cases
 export const createExamStats = (data: {
-  totalExams: number;
+  totalStudents: number;
+  activeExams: number;
   publishedExams: number;
-  draftExams: number;
   totalAttempts: number;
-  averageScore?: number;
 }): StatItem[] => {
   return [
     {
-      id: 'total-exams',
-      title: 'Total Exams',
-      value: data.totalExams,
-      subtitle: `${data.publishedExams} Published, ${data.draftExams} Drafts`,
-      icon: <Book className="w-full h-full" />,
+      id: 'total-students',
+      title: 'Total Students',
+      value: data.totalStudents,
+      subtitle: 'Unique participants',
+      icon: <Users className="w-full h-full" />,
       colorScheme: 'primary',
       size: 'large',
-      trend: data.totalExams > 0 ? {
-        value: Math.round((data.publishedExams / data.totalExams) * 100),
-        label: 'published rate',
-        isPositive: true
-      } : undefined
     },
     {
-      id: 'average-score',
-      title: 'Average Score',
-      value: data.averageScore ? `${data.averageScore}%` : 'N/A',
-      subtitle: 'Across all exams',
-      icon: <BarChart3 className="w-full h-full" />,
+      id: 'active-exams',
+      title: 'Active Exams',
+      value: data.activeExams,
+      subtitle: 'With student attempts',
+      icon: <BookOpen className="w-full h-full" />,
+      colorScheme: 'success',
+    },
+    {
+      id: 'published-exams',
+      title: 'Published',
+      value: data.publishedExams,
+      subtitle: 'Live exams',
+      icon: <CheckCircle className="w-full h-full" />,
       colorScheme: 'warning',
-      trend: data.averageScore && data.averageScore >= 80 ? {
-        value: data.averageScore,
-        label: 'excellent performance',
-        isPositive: true
-      } : data.averageScore && data.averageScore >= 60 ? {
-        value: data.averageScore,
-        label: 'good performance',
-        isPositive: true
-      } : data.averageScore ? {
-        value: data.averageScore,
-        label: 'needs improvement',
-        isPositive: false
-      } : undefined
     },
     {
       id: 'total-attempts',
       title: 'Total Attempts',
       value: data.totalAttempts,
       subtitle: 'Student submissions',
-      icon: <Users className="w-full h-full" />,
-      colorScheme: 'success',
-      trend: data.totalAttempts > 0 ? {
-        value: Math.min(data.totalAttempts * 10, 100),
-        label: 'engagement rate',
-        isPositive: true
-      } : undefined
+      icon: <BarChart3 className="w-full h-full" />,
+      colorScheme: 'info',
     }
   ];
 };

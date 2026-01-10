@@ -12,6 +12,11 @@ import TakeExam from "./pages/TakeExam";
 import JoinExam from "./pages/JoinExam";
 import TeacherOnboarding from "./pages/TeacherOnboarding";
 import Profile from "./pages/Profile";
+import Settings from "./pages/Settings";
+import SettingsFeedback from "./pages/SettingsFeedback";
+import SettingsLanguage from "./pages/SettingsLanguage";
+import SettingsAbout from "./pages/SettingsAbout";
+import SettingsDrafts from "./pages/SettingsDrafts";
 import ExamAnalytics from "./pages/ExamAnalytics";
 import ExamResults from "./pages/ExamResults";
 import Results from "./pages/Results";
@@ -122,6 +127,71 @@ const router = createBrowserRouter([
         <ResponsiveNavbar />
         <AuthGuard>
           <Profile />
+        </AuthGuard>
+      </>
+    ),
+  },
+  {
+    path: "/settings",
+    element: (
+      <>
+        <PWAInstallPrompt delay={3000} showAdvanced={true} />
+        <OfflineIndicator />
+        <ResponsiveNavbar />
+        <AuthGuard>
+          <Settings />
+        </AuthGuard>
+      </>
+    ),
+  },
+  {
+    path: "/settings/feedback",
+    element: (
+      <>
+        <PWAInstallPrompt delay={3000} showAdvanced={true} />
+        <OfflineIndicator />
+        <ResponsiveNavbar />
+        <AuthGuard>
+          <SettingsFeedback />
+        </AuthGuard>
+      </>
+    ),
+  },
+  {
+    path: "/settings/language",
+    element: (
+      <>
+        <PWAInstallPrompt delay={3000} showAdvanced={true} />
+        <OfflineIndicator />
+        <ResponsiveNavbar />
+        <AuthGuard>
+          <SettingsLanguage />
+        </AuthGuard>
+      </>
+    ),
+  },
+  {
+    path: "/settings/about",
+    element: (
+      <>
+        <PWAInstallPrompt delay={3000} showAdvanced={true} />
+        <OfflineIndicator />
+        <ResponsiveNavbar />
+        <AuthGuard>
+          <SettingsAbout />
+        </AuthGuard>
+      </>
+    ),
+  },
+  {
+    path: "/settings/drafts",
+    element: (
+      <>
+        <PWAInstallPrompt delay={3000} showAdvanced={true} />
+        <OfflineIndicator />
+        <ResponsiveNavbar />
+        <AuthGuard>
+          <SettingsDrafts />
         </AuthGuard>
       </>
     ),

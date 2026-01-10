@@ -51,15 +51,15 @@ const ResponsiveNavbar = () => {
   // Get navigation items based on user role
   const getNavigationItems = (): NavigationItem[] => {
     const commonItems: NavigationItem[] = [
-      { icon: Home, label: 'Home', path: '/', key: 'home' },
-      { icon: HelpCircle, label: 'How it Works', path: '/how-it-works', key: 'how-it-works' }
+      { icon: Home, label: 'Home', path: '/', key: 'home' }
     ];
 
     const authenticatedItems: NavigationItem[] = isAuthenticated && !loading ? [
       !isTeacher && { icon: Plus, label: 'Join Exam', path: '/join', key: 'join' },
       ...(isTeacher ? [{ icon: Plus, label: 'Create Exam', path: '/create-exam', key: 'create-exam' }] : []),
       { icon: isTeacher ? BookOpen : BarChart3, label: isTeacher ? 'Exams' : 'Results', path: isTeacher ? '/exams' : '/results', key: isTeacher ? 'exams' : 'results' },
-      { icon: User, label: 'Profile', path: '/profile', key: 'profile' }
+      { icon: User, label: 'Profile', path: '/profile', key: 'profile' },
+      { icon: Settings, label: 'Settings', path: '/settings', key: 'settings' }
     ].filter(Boolean) as NavigationItem[] : [];
 
     return [...commonItems, ...authenticatedItems];
@@ -277,30 +277,6 @@ const ResponsiveNavbar = () => {
               );
             })}
             
-            {/* User menu divider */}
-            {isAuthenticated && (
-              <div className="w-8 h-px bg-border my-2" />
-            )}
-            
-            {/* User actions */}
-            {isAuthenticated && !loading && (
-              <>
-                <button
-                  onClick={() => navigate('/profile')}
-                  className="group relative flex items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 text-muted-foreground hover:text-foreground hover:bg-muted/50 hover:scale-105"
-                  title="Profile Settings"
-                  aria-label="Profile Settings"
-                >
-                  <Settings className="w-5 h-5" />
-                  
-                  {/* Tooltip */}
-                  <div className="absolute left-full ml-3 px-3 py-1 bg-popover text-popover-foreground text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                    Settings
-                    <div className="absolute right-full top-1/2 transform -translate-y-1/2 border-4 border-transparent border-r-popover" />
-                  </div>
-                </button>
-              </>
-            )}
           </div>
         </Card>
       </nav>

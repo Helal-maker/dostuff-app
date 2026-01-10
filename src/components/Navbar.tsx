@@ -37,12 +37,6 @@ const Navbar = () => {
               <Home className="w-4 h-4" />
               Home
             </button>
-            <button
-              onClick={() => navigate('/how-it-works')}
-              className="text-muted-foreground hover:text-foreground transition-colors font-medium"
-            >
-              How it Works
-            </button>
             {isAuthenticated && !loading && (
               <>
                 {!isTeacher && (
@@ -172,12 +166,6 @@ const Navbar = () => {
         {/* Mobile Menu */}
         {isMenuOpen && <div className="md:hidden border-t border-border">
             <div className="py-6 space-y-4">
-              <button
-                onClick={() => { setIsMenuOpen(false); navigate('/how-it-works'); }}
-                className="block text-muted-foreground hover:text-foreground transition-colors"
-              >
-                How it Works
-              </button>
               {isAuthenticated && !loading && (
                 <>
                   {!isTeacher && (

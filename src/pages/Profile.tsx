@@ -14,8 +14,10 @@ import {
   UserPlus,
   LogOut,
   Sparkles,
-  GraduationCap
+  GraduationCap,
+  Users
 } from "lucide-react";
+import { Label } from "@/components/ui/label";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
 interface ExamStats {
@@ -231,7 +233,7 @@ const Profile = () => {
                   />
                 </label>
               </div>
-              
+
               <div className="flex-1 text-center md:text-left">
                 <h2 className="text-2xl font-bold text-gray-900 mb-2">{fullName || 'User'}</h2>
                 <p className="text-gray-500 mb-3 break-all">{user?.email}</p>
@@ -246,7 +248,7 @@ const Profile = () => {
                   </span>
                 </div>
               </div>
-              
+
               <div className="flex gap-3">
                 <Button
                   onClick={() => window.open('https://t.me/+P-Vu76yybMA5MjBk', '_blank')}
@@ -265,6 +267,70 @@ const Profile = () => {
               </div>
             </div>
           </div>
+
+          {/* Teacher Information Card */}
+          {isTeacher && profileData && (
+            <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Teaching Information</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {profileData.subject && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Subject</Label>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <GraduationCap className="w-4 h-4 text-primary" />
+                      <span className="text-gray-900 font-medium">{profileData.subject}</span>
+                    </div>
+                  </div>
+                )}
+
+                {profileData.experience_years !== null && profileData.experience_years !== undefined && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Years of Experience</Label>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <Users className="w-4 h-4 text-success" />
+                      <span className="text-gray-900 font-medium">{profileData.experience_years} years</span>
+                    </div>
+                  </div>
+                )}
+
+                {profileData.graduation_year && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Graduation Year</Label>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <School className="w-4 h-4 text-warning" />
+                      <span className="text-gray-900 font-medium">{profileData.graduation_year}</span>
+                    </div>
+                  </div>
+                )}
+
+                {profileData.certificate_type && (
+                  <div className="space-y-2">
+                    <Label className="text-sm font-medium text-gray-700">Certificate/Degree</Label>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      <GraduationCap className="w-4 h-4 text-accent" />
+                      <span className="text-gray-900 font-medium">{profileData.certificate_type}</span>
+                    </div>
+                  </div>
+                )}
+
+                {profileData.teacher_type && (
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-sm font-medium text-gray-700">Teaching Type</Label>
+                    <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
+                      {profileData.teacher_type === 'school' && <School className="w-4 h-4 text-primary" />}
+                      {profileData.teacher_type === 'private' && <Users className="w-4 h-4 text-success" />}
+                      {profileData.teacher_type === 'both' && <GraduationCap className="w-4 h-4 text-accent" />}
+                      <span className="text-gray-900 font-medium capitalize">
+                        {profileData.teacher_type === 'school' ? 'School Teacher' :
+                         profileData.teacher_type === 'private' ? 'Private Tutor' :
+                         'Both School & Private'}
+                      </span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
         </div>
       </div>
