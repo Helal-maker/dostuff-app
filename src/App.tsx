@@ -17,6 +17,7 @@ import SettingsFeedback from "./pages/SettingsFeedback";
 import SettingsLanguage from "./pages/SettingsLanguage";
 import SettingsAbout from "./pages/SettingsAbout";
 import SettingsDrafts from "./pages/SettingsDrafts";
+import Feedback from "./pages/Feedback";
 import ExamAnalytics from "./pages/ExamAnalytics";
 import ExamResults from "./pages/ExamResults";
 import Results from "./pages/Results";
@@ -192,6 +193,19 @@ const router = createBrowserRouter([
         <ResponsiveNavbar />
         <AuthGuard>
           <SettingsDrafts />
+        </AuthGuard>
+      </>
+    ),
+  },
+  {
+    path: "/feedback",
+    element: (
+      <>
+        <PWAInstallPrompt delay={3000} showAdvanced={true} />
+        <OfflineIndicator />
+        <ResponsiveNavbar />
+        <AuthGuard>
+          <Feedback />
         </AuthGuard>
       </>
     ),

@@ -169,7 +169,7 @@ const Settings = () => {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-hero overflow-hidden">
+    <div className="min-h-screen bg-background overflow-hidden">
       {/* Background decorative elements */}
       <div className="absolute inset-0 opacity-10">
         <div className="absolute top-20 left-10 w-32 h-32 bg-accent rounded-full blur-xl animate-pulse"></div>
@@ -181,7 +181,7 @@ const Settings = () => {
         <div className="text-center mb-12">
           <h1 className="text-5xl lg:text-7xl font-bold mb-6 leading-tight">
             <span className="text-foreground">Settings</span>{" "}
-            <span className="bg-gradient-primary bg-clip-text text-transparent">
+            <span className="text-primary">
               Hub
             </span>
           </h1>
@@ -192,7 +192,7 @@ const Settings = () => {
 
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 max-w-6xl mx-auto">
           {/* Feedback Section */}
-          <Card className="bg-gradient-card rounded-3xl shadow-strong p-6 backdrop-blur-sm hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/settings/feedback')}>
+          <Card className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-lg p-6 hover:shadow-xl hover:border-primary/30 transition-all duration-300 cursor-pointer group" onClick={() => navigate('/feedback')}>
             <CardHeader className="pb-4">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <MessageSquare className="w-6 h-6 text-primary" />
@@ -211,7 +211,7 @@ const Settings = () => {
           </Card>
 
           {/* Language Section */}
-          <Card className="bg-gradient-card rounded-3xl shadow-strong p-6 backdrop-blur-sm hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/settings/language')}>
+          <Card className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-lg p-6 hover:shadow-xl hover:border-success/30 transition-all duration-300 cursor-pointer group" onClick={() => navigate('/settings/language')}>
             <CardHeader className="pb-4">
               <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center mb-4">
                 <Globe className="w-6 h-6 text-success" />
@@ -230,7 +230,7 @@ const Settings = () => {
           </Card>
 
           {/* Privacy Policy */}
-          <Card className="bg-gradient-card rounded-3xl shadow-strong p-6 backdrop-blur-sm hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/privacy-policy')}>
+          <Card className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-lg p-6 hover:shadow-xl hover:border-warning/30 transition-all duration-300 cursor-pointer group" onClick={() => navigate('/privacy-policy')}>
             <CardHeader className="pb-4">
               <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center mb-4">
                 <Shield className="w-6 h-6 text-warning" />
@@ -249,7 +249,7 @@ const Settings = () => {
           </Card>
 
           {/* Terms of Service */}
-          <Card className="bg-gradient-card rounded-3xl shadow-strong p-6 backdrop-blur-sm hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/terms-of-service')}>
+          <Card className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-lg p-6 hover:shadow-xl hover:border-accent/30 transition-all duration-300 cursor-pointer group" onClick={() => navigate('/terms-of-service')}>
             <CardHeader className="pb-4">
               <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mb-4">
                 <FileText className="w-6 h-6 text-accent" />
@@ -268,7 +268,7 @@ const Settings = () => {
           </Card>
 
           {/* About */}
-          <Card className="bg-gradient-card rounded-3xl shadow-strong p-6 backdrop-blur-sm hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/settings/about')}>
+          <Card className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-lg p-6 hover:shadow-xl hover:border-primary/30 transition-all duration-300 cursor-pointer group" onClick={() => navigate('/settings/about')}>
             <CardHeader className="pb-4">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
                 <Info className="w-6 h-6 text-primary" />
@@ -288,7 +288,7 @@ const Settings = () => {
 
           {/* Saved Exam Drafts - Teachers Only */}
           {isTeacher && (
-            <Card className="bg-gradient-card rounded-3xl shadow-strong p-6 backdrop-blur-sm hover:shadow-glow transition-all duration-300 cursor-pointer group" onClick={() => navigate('/settings/drafts')}>
+            <Card className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-lg p-6 hover:shadow-xl hover:border-success/30 transition-all duration-300 cursor-pointer group" onClick={() => navigate('/settings/drafts')}>
               <CardHeader className="pb-4">
                 <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center mb-4">
                   <FileEdit className="w-6 h-6 text-success" />

@@ -555,8 +555,8 @@ const Dashboard = () => {
 
   if (loading || loadingData) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
-        <Card className="p-8 bg-card/95 backdrop-blur-sm border-0 shadow-strong">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="p-8 bg-card/95 backdrop-blur-sm border-0 shadow-lg">
           <div className="flex items-center justify-center space-x-3">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <p className="text-muted-foreground">Loading your dashboard...</p>

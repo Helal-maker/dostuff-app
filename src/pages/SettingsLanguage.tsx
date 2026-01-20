@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
-import { Globe, ArrowLeft, Check } from 'lucide-react';
+import { Globe, ArrowLeft, Check, Languages, Flag } from 'lucide-react';
 
 const SettingsLanguage = () => {
   const { toast } = useToast();
@@ -31,10 +31,11 @@ const SettingsLanguage = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-hero overflow-hidden">
-      <div className="absolute inset-0 opacity-10">
-        <div className="absolute top-20 left-10 w-32 h-32 bg-accent rounded-full blur-xl animate-pulse"></div>
-        <div className="absolute bottom-20 right-10 w-48 h-48 bg-primary-glow rounded-full blur-2xl animate-pulse"></div>
+    <div className="min-h-screen bg-background overflow-hidden pt-20">
+      {/* Glassmorphism background elements */}
+      <div className="absolute inset-0 opacity-5 pointer-events-none">
+        <div className="absolute top-20 left-10 w-32 h-32 bg-primary rounded-full blur-3xl"></div>
+        <div className="absolute bottom-20 right-10 w-48 h-48 bg-primary rounded-full blur-3xl"></div>
       </div>
 
       <div className="container mx-auto px-6 lg:px-8 relative z-10 py-12">
@@ -51,7 +52,7 @@ const SettingsLanguage = () => {
           <div className="text-center mb-8">
             <h1 className="text-4xl lg:text-5xl font-bold mb-4 leading-tight">
               <span className="text-foreground">Choose Your</span>{" "}
-              <span className="bg-gradient-primary bg-clip-text text-transparent">
+              <span className="text-primary">
                 Language
               </span>
             </h1>
@@ -60,10 +61,10 @@ const SettingsLanguage = () => {
             </p>
           </div>
 
-          <Card className="bg-gradient-card rounded-3xl shadow-strong p-8 backdrop-blur-sm">
+          <Card className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-lg p-8 hover:shadow-xl hover:border-primary/30 transition-all duration-300">
             <CardHeader className="text-center pb-6">
-              <div className="w-16 h-16 bg-success/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                <Globe className="w-8 h-8 text-success" />
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                <Languages className="w-8 h-8 text-primary" />
               </div>
               <CardTitle className="text-2xl font-bold text-foreground">Language Settings</CardTitle>
               <CardDescription className="text-muted-foreground">
@@ -74,30 +75,29 @@ const SettingsLanguage = () => {
               <div>
                 <label className="text-sm font-medium text-foreground mb-4 block">Select Language</label>
                 <Select value={language} onValueChange={setLanguage}>
-                  <SelectTrigger className="bg-background/50 backdrop-blur-sm h-12">
+                  <SelectTrigger className="bg-card/50 backdrop-blur-sm h-12 border-border/50 focus:ring-primary/20">
                     <SelectValue placeholder="Select language" />
                   </SelectTrigger>
                   <SelectContent>
                     {languages.map((lang) => (
                       <SelectItem key={lang.code} value={lang.code} className="flex items-center gap-2">
-                        <span>{lang.flag}</span>
-                        <span>{lang.name}</span>
+                        <span>{lang.flag} {lang.name}</span>
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
 
-              <div className="bg-background/20 rounded-lg p-4">
-                <h3 className="font-medium text-foreground mb-2">Current Selection</h3>
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">
+              <div className="bg-card/50 backdrop-blur-sm border border-border/50 rounded-lg p-4 hover:border-primary/30 transition-all duration-300">
+                <h3 className="font-medium text-foreground mb-3">Current Selection</h3>
+                <div className="flex items-center gap-3">
+                  <div className="text-2xl">
                     {languages.find(l => l.code === language)?.flag}
-                  </span>
-                  <span className="text-foreground font-medium">
+                  </div>
+                  <span className="text-foreground font-medium flex-1">
                     {languages.find(l => l.code === language)?.name}
                   </span>
-                  {language === 'en' && <Check className="w-4 h-4 text-success ml-auto" />}
+                  {language === 'en' && <Check className="w-5 h-5 text-success" />}
                 </div>
               </div>
 

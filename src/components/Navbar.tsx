@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Menu, X, BarChart3, BookOpen, Home, User, Plus } from "lucide-react";
+import { Menu, X, BarChart3, BookOpen, Home, User, Plus, MessageSquare } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { useAuth } from "@/hooks/useAuth";
 import { MobileNavbar } from "./mobile/MobileNavigation";
+import SubmitFeedbackModal from "./SubmitFeedbackModal";
 import logo from "@/assets/logo-dostuff.png";
 
 const Navbar = () => {
@@ -19,7 +20,8 @@ const Navbar = () => {
   }
 
   return (
-    <nav className="fixed top-0 w-full bg-background/80 backdrop-blur-md border-b border-border z-50 shadow-soft">
+    <>
+      <nav className="fixed top-0 w-full bg-background/80 backdrop-blur-md border-b border-border z-50 shadow-soft">
       <div className="container mx-auto px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
@@ -64,6 +66,14 @@ const Navbar = () => {
                       <User className="w-4 h-4" />
                       Profile
                     </button>
+                    <button
+                      onClick={() => navigate('/feedback')}
+                      className="text-muted-foreground hover:text-foreground transition-colors font-medium flex items-center gap-2"
+                      aria-label="View feedback"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Feedback
+                    </button>
                   </>
                 )}
                 {isTeacher && (
@@ -82,6 +92,14 @@ const Navbar = () => {
                     >
                       <BookOpen className="w-4 h-4" />
                       Exams
+                    </button>
+                    <button
+                      onClick={() => navigate('/feedback')}
+                      className="text-muted-foreground hover:text-foreground transition-colors font-medium flex items-center gap-2"
+                      aria-label="View feedback"
+                    >
+                      <MessageSquare className="w-4 h-4" />
+                      Feedback
                     </button>
                     <button
                       onClick={() => navigate('/profile')}
@@ -141,10 +159,26 @@ const Navbar = () => {
                 </button>
               </>
             )}
+            <button
+              onClick={() => navigate('/feedback')}
+              className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-accent/10"
+              aria-label="View feedback"
+              title="View feedback"
+            >
+              <MessageSquare className="w-5 h-5" />
+            </button>
           </div>
 
           {/* Desktop CTA */}
           <div className="hidden md:flex items-center gap-3">
+            <button
+              onClick={() => navigate('/feedback')}
+              className="text-muted-foreground hover:text-foreground transition-colors p-2 rounded-lg hover:bg-accent/10"
+              aria-label="View feedback"
+              title="View feedback"
+            >
+              <MessageSquare className="w-5 h-5" />
+            </button>
             {!isAuthenticated && !loading && (
               <>
                 <Button variant="ghost" onClick={() => navigate('/auth')}>
@@ -166,6 +200,15 @@ const Navbar = () => {
         {/* Mobile Menu */}
         {isMenuOpen && <div className="md:hidden border-t border-border">
             <div className="py-6 space-y-4">
+              <button
+                onClick={() => { setIsMenuOpen(false); navigate('/feedback'); }}
+                className="block w-full text-left px-2 py-2 text-muted-foreground hover:text-foreground transition-colors rounded-lg hover:bg-accent/10"
+              >
+                <div className="flex items-center gap-2">
+                  <MessageSquare className="w-4 h-4" />
+                  <span>Feedback</span>
+                </div>
+              </button>
               {isAuthenticated && !loading && (
                 <>
                   {!isTeacher && (
@@ -217,9 +260,10 @@ const Navbar = () => {
                 </Button>
               </div>
             </div>
-          </div>}
+          </div>
+        )}
       </div>
-    </nav>
+    </>
   );
 };
 
