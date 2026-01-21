@@ -219,7 +219,7 @@ const ExamAnalytics = () => {
           </div>
         </div>
         
-        <Card className="p-6 bg-gradient-card border-0 shadow-medium">
+        <Card className="p-6 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-slate-700/30 shadow-md">
           <div className="flex flex-col lg:flex-row">
             {/* Day labels - Responsive visibility */}
             <div className="flex flex-row lg:flex-col mr-0 lg:mr-3 mt-0 lg:mt-8 mb-2 lg:mb-0">
@@ -338,8 +338,8 @@ const ExamAnalytics = () => {
 
   if (authLoading || loading) {
     return (
-      <div className="min-h-screen bg-gradient-hero flex items-center justify-center">
-        <Card className="p-8 bg-gradient-card border-0 shadow-medium">
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Card className="p-8 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-slate-700/30 shadow-medium">
           <div className="flex items-center justify-center space-x-3">
             <Loader2 className="h-6 w-6 animate-spin text-primary" />
             <p className="text-muted-foreground">Loading analytics...</p>
@@ -355,35 +355,36 @@ const ExamAnalytics = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="bg-gradient-hero text-primary-foreground py-8 px-6">
+      <div className="bg-primary text-primary-foreground py-8 px-6">
         <div className="max-w-6xl mx-auto">
-          <div className="flex items-center gap-4 mb-4">
+          <div className="flex items-center gap-2 mb-4 flex-wrap">
             <Button
               variant="ghost"
               onClick={() => navigate('/dashboard')}
               className="text-primary-foreground hover:bg-primary-foreground/10"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Dashboard
+              Dashboard
             </Button>
+            <span className="text-primary-foreground/50">/</span>
             <Button
               variant="ghost"
               onClick={() => navigate('/exams')}
               className="text-primary-foreground hover:bg-primary-foreground/10"
             >
               <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Exams
+              Exams
             </Button>
           </div>
           <h1 className="text-3xl font-bold">{exam.title}</h1>
-          <p className="text-primary-foreground/80 mt-2">Exam Analytics & Student Performance</p>
+          <p className="text-primary-foreground/80 mt-2">Analytics & Student Performance Overview</p>
         </div>
       </div>
 
       <div className="max-w-6xl mx-auto px-6 py-8">
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card className="p-6 bg-gradient-card border-0 shadow-medium">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-8">
+          <Card className="p-6 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-slate-700/30 shadow-md hover:shadow-lg transition-all hover:bg-white/80 dark:hover:bg-slate-800/80">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center">
                 <Users className="w-6 h-6 text-primary" />
@@ -395,7 +396,7 @@ const ExamAnalytics = () => {
             </div>
           </Card>
 
-          <Card className="p-6 bg-gradient-card border-0 shadow-medium">
+          <Card className="p-6 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-slate-700/30 shadow-md hover:shadow-lg transition-all hover:bg-white/80 dark:hover:bg-slate-800/80">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-success/10 rounded-lg flex items-center justify-center">
                 <CheckCircle className="w-6 h-6 text-success" />
@@ -407,7 +408,7 @@ const ExamAnalytics = () => {
             </div>
           </Card>
 
-          <Card className="p-6 bg-gradient-card border-0 shadow-medium">
+          <Card className="p-6 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-slate-700/30 shadow-md hover:shadow-lg transition-all hover:bg-white/80 dark:hover:bg-slate-800/80">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-destructive/10 rounded-lg flex items-center justify-center">
                 <XCircle className="w-6 h-6 text-destructive" />
@@ -419,7 +420,7 @@ const ExamAnalytics = () => {
             </div>
           </Card>
 
-          <Card className="p-6 bg-gradient-card border-0 shadow-medium">
+          <Card className="p-6 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-slate-700/30 shadow-md hover:shadow-lg transition-all hover:bg-white/80 dark:hover:bg-slate-800/80">
             <div className="flex items-center gap-4">
               <div className="w-12 h-12 bg-warning/10 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-6 h-6 text-warning" />
@@ -438,8 +439,8 @@ const ExamAnalytics = () => {
         )}
 
         {/* Student Results Table */}
-        <Card className="bg-gradient-card border-0 shadow-medium overflow-hidden">
-          <div className="p-6 border-b border-border">
+        <Card className="bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-slate-700/30 shadow-md overflow-hidden">
+          <div className="p-6 border-b border-white/10 dark:border-slate-700/30">
             <h2 className="text-xl font-semibold text-foreground flex items-center gap-2">
               <Trophy className="w-5 h-5 text-warning" />
               Student Results
@@ -457,18 +458,18 @@ const ExamAnalytics = () => {
           ) : (
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-muted/50">
+                <thead className="bg-primary/5 border-b border-white/10 dark:border-slate-700/30">
                   <tr>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Student Name</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Score</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Status</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Time Taken</th>
-                    <th className="px-6 py-4 text-left text-sm font-medium text-muted-foreground">Date</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Student Name</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Score</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Status</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Time Taken</th>
+                    <th className="px-6 py-4 text-left text-sm font-semibold text-foreground">Date</th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-border">
+                <tbody className="divide-y divide-white/10 dark:divide-slate-700/30">
                   {attempts.map((attempt) => (
-                    <tr key={attempt.id} className="hover:bg-muted/30 transition-colors">
+                    <tr key={attempt.id} className="hover:bg-primary/5 transition-colors">
                       <td className="px-6 py-4">
                         <span className="font-medium text-foreground">
                           {attempt.student_name || 'Unknown Student'}

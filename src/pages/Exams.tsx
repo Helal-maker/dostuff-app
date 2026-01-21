@@ -333,14 +333,14 @@ const Exams = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-50">
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto px-4 sm:px-6 py-8">
         {/* Back Button */}
         <div className="mb-6">
           <Button
             variant="ghost"
             onClick={() => navigate('/dashboard')}
-            className="text-slate-600 hover:text-slate-900 hover:bg-white/60 backdrop-blur-sm"
+            className="text-muted-foreground hover:text-foreground hover:bg-white/60 dark:hover:bg-slate-900/60 backdrop-blur-sm"
           >
             ← Back to Dashboard
           </Button>
@@ -348,10 +348,10 @@ const Exams = () => {
         
         {/* Page Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold bg-gradient-to-r from-slate-800 to-slate-600 bg-clip-text text-transparent">
+          <h1 className="text-4xl font-bold text-foreground">
             Exams Overview
           </h1>
-          <p className="text-slate-600 mt-3 text-lg">
+          <p className="text-muted-foreground mt-3 text-lg">
             Manage your exams and track student performance
           </p>
         </div>
@@ -359,19 +359,19 @@ const Exams = () => {
         {/* Filters and Search */}
         <div className="flex flex-col sm:flex-row justify-between gap-4 mb-8">
           <div className="relative w-full sm:w-80">
-            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder="Search exams by title, description, or subject..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-12 h-12 bg-white/80 backdrop-blur-sm border-slate-200 rounded-xl shadow-sm focus:shadow-md transition-all"
+              className="pl-12 h-12 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border-white/20 dark:border-slate-700/30 rounded-xl shadow-sm focus:shadow-md transition-all"
             />
           </div>
           
           <div className="flex gap-3">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-12 px-6 bg-white/80 backdrop-blur-sm border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all">
+                <Button variant="outline" className="h-12 px-6 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border-white/20 dark:border-slate-700/30 rounded-xl shadow-sm hover:shadow-md transition-all">
                   <SlidersHorizontal className="h-4 w-4 mr-2" />
                   <span>Filter</span>
                   <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
@@ -395,7 +395,7 @@ const Exams = () => {
             
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" className="h-12 px-6 bg-white/80 backdrop-blur-sm border-slate-200 rounded-xl shadow-sm hover:shadow-md transition-all">
+                <Button variant="outline" className="h-12 px-6 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border-white/20 dark:border-slate-700/30 rounded-xl shadow-sm hover:shadow-md transition-all">
                   <ArrowUpDown className="h-4 w-4 mr-2" />
                   <span>Sort</span>
                   <ChevronDown className="h-4 w-4 ml-2 opacity-50" />
@@ -419,7 +419,7 @@ const Exams = () => {
 
         {/* Exams Count */}
         <div className="mb-6">
-          <p className="text-sm text-slate-600 bg-white/60 backdrop-blur-sm px-4 py-2 rounded-lg border border-slate-200 inline-block">
+          <p className="text-sm text-muted-foreground bg-white/60 dark:bg-slate-900/60 backdrop-blur-md px-4 py-2 rounded-lg border border-white/20 dark:border-slate-700/30 inline-block">
             Showing {filteredExams.length} {filteredExams.length === 1 ? 'exam' : 'exams'}
             {filteredExams.length !== exams.length && ` (filtered from ${exams.length})`}
           </p>
@@ -427,9 +427,9 @@ const Exams = () => {
 
         {/* Exams Grid */}
         {loading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8" aria-busy="true">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" aria-busy="true">
             {[...Array(6)].map((_, i) => (
-              <Card key={i} className="overflow-hidden border-0 shadow-lg bg-white/80 backdrop-blur-sm rounded-2xl">
+              <Card key={i} className="overflow-hidden border border-white/20 dark:border-slate-700/30 shadow-md bg-white/60 dark:bg-slate-900/60 backdrop-blur-md rounded-2xl">
                 <CardHeader className="p-6">
                   <Skeleton className="h-7 w-3/4 mb-3" />
                   <Skeleton className="h-5 w-1/2" />
@@ -453,10 +453,10 @@ const Exams = () => {
             ))}
           </div>
         ) : filteredExams.length === 0 ? (
-          <Card className="p-16 bg-white/80 backdrop-blur-sm border-0 shadow-xl text-center rounded-3xl">
-            <BookOpen className="w-20 h-20 text-slate-400 mx-auto mb-6" />
-            <h3 className="text-2xl font-bold text-slate-800 mb-3">No exams found</h3>
-            <p className="text-slate-600 mb-8 text-lg">
+          <Card className="p-16 bg-white/60 dark:bg-slate-900/60 backdrop-blur-md border border-white/20 dark:border-slate-700/30 shadow-lg text-center rounded-3xl">
+            <BookOpen className="w-20 h-20 text-muted-foreground mx-auto mb-6" />
+            <h3 className="text-2xl font-bold text-foreground mb-3">No exams found</h3>
+            <p className="text-muted-foreground mb-8 text-lg">
               {exams.length > 0 
                 ? "Try adjusting your filters to see more exams" 
                 : "Create your first exam to get started"}
@@ -473,7 +473,7 @@ const Exams = () => {
           </Card>
         ) : (
           <div 
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"
             role="region"
             aria-label="Exams list"
           >
@@ -481,19 +481,19 @@ const Exams = () => {
               <Card 
                 key={exam.id} 
                 className={cn(
-                  "overflow-hidden border-0 shadow-lg bg-white/90 backdrop-blur-sm transition-all duration-300",
-                  "hover:shadow-2xl hover:scale-[1.02] hover:-translate-y-1",
+                  "overflow-hidden border border-white/20 dark:border-slate-700/30 shadow-md bg-white/60 dark:bg-slate-900/60 backdrop-blur-md transition-all duration-300",
+                  "hover:shadow-lg hover:bg-white/80 dark:hover:bg-slate-800/80 hover:-translate-y-1",
                   "rounded-2xl relative group"
                 )}
                 tabIndex={0}
               >
-                {/* Gradient Header */}
-                <div className="h-2 bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500"></div>
+                {/* Accent Top Border */}
+                <div className="h-1 bg-gradient-to-r from-primary to-primary/60"></div>
                 
                 <CardHeader className="p-6 pb-4">
                   <div className="flex justify-between items-start mb-3">
                     <div className="flex-1">
-                      <CardTitle className="text-xl font-bold text-slate-800 line-clamp-2 leading-tight">
+                      <CardTitle className="text-xl font-bold text-foreground line-clamp-2 leading-tight">
                         {exam.title}
                       </CardTitle>
                       {/* Subject Badge */}
@@ -513,16 +513,16 @@ const Exams = () => {
                   </div>
                   
                   {exam.description && (
-                    <CardDescription className="text-slate-600 line-clamp-3 leading-relaxed">
+                    <CardDescription className="text-muted-foreground line-clamp-3 leading-relaxed">
                       {exam.description}
                     </CardDescription>
                   )}
                   
                   {/* Teacher Info */}
                   {exam.teacher_profile?.full_name && (
-                    <div className="flex items-center gap-2 mt-3 p-2 bg-slate-50 rounded-lg">
-                      <GraduationCap className="w-4 h-4 text-slate-500" />
-                      <span className="text-sm text-slate-700 font-medium">
+                    <div className="flex items-center gap-2 mt-3 p-2 bg-primary/5 rounded-lg">
+                      <GraduationCap className="w-4 h-4 text-primary/60" />
+                      <span className="text-sm text-foreground font-medium">
                         {exam.teacher_profile.full_name}
                       </span>
                     </div>
@@ -531,41 +531,41 @@ const Exams = () => {
                 
                 <CardContent className="p-6 pt-0">
                   {/* Stats Grid */}
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50 p-4 rounded-xl border border-blue-100">
+                  <div className="grid grid-cols-2 gap-3 mb-6">
+                    <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 transition-all hover:bg-primary/10">
                       <div className="flex items-center gap-2 mb-1">
-                        <Users className="w-4 h-4 text-blue-600" />
-                        <span className="text-xs font-medium text-blue-700">Students</span>
+                        <Users className="w-4 h-4 text-primary" />
+                        <span className="text-xs font-medium text-muted-foreground">Students</span>
                       </div>
-                      <span className="text-2xl font-bold text-blue-800">{exam._count?.attempts || 0}</span>
+                      <span className="text-2xl font-bold text-foreground">{exam._count?.attempts || 0}</span>
                     </div>
                     
-                    <div className="bg-gradient-to-br from-green-50 to-emerald-50 p-4 rounded-xl border border-green-100">
+                    <div className="bg-success/5 p-4 rounded-xl border border-success/10 transition-all hover:bg-success/10">
                       <div className="flex items-center gap-2 mb-1">
-                        <Trophy className="w-4 h-4 text-green-600" />
-                        <span className="text-xs font-medium text-green-700">Avg Score</span>
+                        <Trophy className="w-4 h-4 text-success" />
+                        <span className="text-xs font-medium text-muted-foreground">Avg Score</span>
                       </div>
                       <span className={cn("text-2xl font-bold", getScoreColor(exam.average_score || 0))}>
                         {exam.average_score || 0}%
                       </span>
                     </div>
                     
-                    <div className="bg-gradient-to-br from-purple-50 to-violet-50 p-4 rounded-xl border border-purple-100">
+                    <div className="bg-accent/5 p-4 rounded-xl border border-accent/10 transition-all hover:bg-accent/10">
                       <div className="flex items-center gap-2 mb-1">
-                        <Target className="w-4 h-4 text-purple-600" />
-                        <span className="text-xs font-medium text-purple-700">Pass Rate</span>
+                        <Target className="w-4 h-4 text-accent" />
+                        <span className="text-xs font-medium text-muted-foreground">Pass Rate</span>
                       </div>
                       <span className={cn("text-2xl font-bold", getPassRateColor(exam.pass_rate || 0))}>
                         {exam.pass_rate || 0}%
                       </span>
                     </div>
                     
-                    <div className="bg-gradient-to-br from-orange-50 to-amber-50 p-4 rounded-xl border border-orange-100">
+                    <div className="bg-warning/5 p-4 rounded-xl border border-warning/10 transition-all hover:bg-warning/10">
                       <div className="flex items-center gap-2 mb-1">
-                        <Clock className="w-4 h-4 text-orange-600" />
-                        <span className="text-xs font-medium text-orange-700">Created</span>
+                        <Clock className="w-4 h-4 text-warning" />
+                        <span className="text-xs font-medium text-muted-foreground">Created</span>
                       </div>
-                      <span className="text-sm font-bold text-orange-800">
+                      <span className="text-sm font-bold text-foreground">
                         {new Date(exam.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                       </span>
                     </div>
@@ -575,7 +575,7 @@ const Exams = () => {
                   <div className="flex gap-2">
                     <Button
                       onClick={() => navigate(`/exam-analytics/${exam.id}`)}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white border-0 rounded-xl shadow-md hover:shadow-lg transition-all"
+                      className="flex-1 bg-primary hover:bg-primary/90 text-primary-foreground border-0 rounded-xl shadow-md hover:shadow-lg transition-all"
                       size="sm"
                     >
                       <BarChart3 className="w-4 h-4 mr-2" />
@@ -587,7 +587,7 @@ const Exams = () => {
                       size="sm"
                       disabled={!exam.share_link}
                       title="Copy share link"
-                      className="border-slate-200 hover:bg-slate-50 rounded-xl"
+                      className="border-white/20 dark:border-slate-700/30 hover:bg-white/40 dark:hover:bg-slate-800/40 rounded-xl backdrop-blur-sm"
                     >
                       <Link className="w-4 h-4" />
                     </Button>
