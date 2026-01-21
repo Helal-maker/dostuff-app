@@ -267,24 +267,7 @@ const Settings = () => {
             </CardContent>
           </Card>
 
-          {/* About */}
-          <Card className="bg-card/80 backdrop-blur-xl border border-border/50 rounded-3xl shadow-lg p-6 hover:shadow-xl hover:border-primary/30 transition-all duration-300 cursor-pointer group" onClick={() => navigate('/settings/about')}>
-            <CardHeader className="pb-4">
-              <div className="w-12 h-12 bg-primary/10 rounded-lg flex items-center justify-center mb-4">
-                <Info className="w-6 h-6 text-primary" />
-              </div>
-              <CardTitle className="text-xl font-bold text-foreground">About</CardTitle>
-              <CardDescription className="text-muted-foreground">
-                Learn about our mission
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-primary font-medium">About us</span>
-                <ChevronRight className="w-5 h-5 text-primary group-hover:translate-x-1 transition-transform" />
-              </div>
-            </CardContent>
-          </Card>
+
 
           {/* Saved Exam Drafts - Teachers Only */}
           {isTeacher && (

@@ -171,19 +171,7 @@ const router = createBrowserRouter([
       </>
     ),
   },
-  {
-    path: "/settings/about",
-    element: (
-      <>
-        <PWAInstallPrompt delay={3000} showAdvanced={true} />
-        <OfflineIndicator />
-        <ResponsiveNavbar />
-        <AuthGuard>
-          <SettingsAbout />
-        </AuthGuard>
-      </>
-    ),
-  },
+
   {
     path: "/settings/drafts",
     element: (
