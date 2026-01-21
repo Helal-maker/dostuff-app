@@ -49,7 +49,10 @@ const FeedbackComments: React.FC<FeedbackCommentsProps> = ({ feedbackId, onComme
         .eq('feedback_id', feedbackId)
         .order('created_at', { ascending: true });
 
-      if (commentsError) throw commentsError;
+      if (commentsError) {
+        console.error('Error fetching user comments:', commentsError);
+        throw commentsError;
+      }
 
       // Fetch admin replies
       const { data: adminReplies, error: repliesError } = await supabase
@@ -58,7 +61,12 @@ const FeedbackComments: React.FC<FeedbackCommentsProps> = ({ feedbackId, onComme
         .eq('feedback_id', feedbackId)
         .order('created_at', { ascending: true });
 
-      if (repliesError) throw repliesError;
+      if (repliesError) {
+        console.error('Error fetching admin replies:', repliesError);
+        throw repliesError;
+      }
+
+      console.log(`Loaded ${userComments?.length || 0} user comments and ${adminReplies?.length || 0} admin replies for feedback ${feedbackId}`);
 
       // Combine and sort both
       const combined: Comment[] = [
@@ -80,6 +88,7 @@ const FeedbackComments: React.FC<FeedbackCommentsProps> = ({ feedbackId, onComme
         }))
       ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
 
+      console.log(`Combined comments: ${combined.length}`);
       setComments(combined);
     } catch (error) {
       console.error('Error loading comments:', error);
@@ -130,17 +139,17 @@ const FeedbackComments: React.FC<FeedbackCommentsProps> = ({ feedbackId, onComme
       if (error) throw error;
 
       // Update comment count to include both user comments and admin replies
-      const { data: allComments } = await supabase
+      const { count: userCommentsCount } = await supabase
         .from('feedback_comments')
         .select('id', { count: 'exact', head: true })
         .eq('feedback_id', feedbackId);
       
-      const { data: allReplies } = await supabase
+      const { count: adminRepliesCount } = await supabase
         .from('admin_replies')
         .select('id', { count: 'exact', head: true })
         .eq('feedback_id', feedbackId);
 
-      const totalCommentCount = (allComments?.length || 0) + (allReplies?.length || 0);
+      const totalCommentCount = (userCommentsCount || 0) + (adminRepliesCount || 0);
       await supabase
         .from('feedbacks')
         .update({ comment_count: totalCommentCount })
@@ -178,17 +187,17 @@ const FeedbackComments: React.FC<FeedbackCommentsProps> = ({ feedbackId, onComme
       if (error) throw error;
 
       // Update comment count to include both user comments and admin replies
-      const { data: userComments } = await supabase
+      const { count: userCommentsCount } = await supabase
         .from('feedback_comments')
         .select('id', { count: 'exact', head: true })
         .eq('feedback_id', feedbackId);
       
-      const { data: adminReplies } = await supabase
+      const { count: adminRepliesCount } = await supabase
         .from('admin_replies')
         .select('id', { count: 'exact', head: true })
         .eq('feedback_id', feedbackId);
 
-      const totalCommentCount = (userComments?.length || 0) + (adminReplies?.length || 0);
+      const totalCommentCount = (userCommentsCount || 0) + (adminRepliesCount || 0);
       await supabase
         .from('feedbacks')
         .update({ comment_count: Math.max(0, totalCommentCount) })

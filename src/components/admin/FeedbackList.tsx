@@ -102,19 +102,19 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onSelectFeedback }) => {
       // Recalculate comment counts to include admin replies
       const feedbacksWithCorrectCounts = await Promise.all(
         (data || []).map(async (feedback) => {
-          // Fetch user comments
-          const { data: userComments } = await supabase
+          // Fetch user comments count
+          const { count: userCommentsCount } = await supabase
             .from('feedback_comments')
             .select('id', { count: 'exact', head: true })
             .eq('feedback_id', feedback.id);
 
-          // Fetch admin replies
-          const { data: adminReplies } = await supabase
+          // Fetch admin replies count
+          const { count: adminRepliesCount } = await supabase
             .from('admin_replies')
             .select('id', { count: 'exact', head: true })
             .eq('feedback_id', feedback.id);
 
-          const totalCommentCount = (userComments?.length || 0) + (adminReplies?.length || 0);
+          const totalCommentCount = (userCommentsCount || 0) + (adminRepliesCount || 0);
           
           return {
             ...feedback,
