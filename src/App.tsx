@@ -7,6 +7,7 @@ import { createBrowserRouter, RouterProvider } from "react-router-dom";
 import RootRoute from "./pages/RootRoute";
 import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
+import AdminDashboard from "./pages/AdminDashboard";
 import CreateExam from "./pages/CreateExam";
 import TakeExam from "./pages/TakeExam";
 import JoinExam from "./pages/JoinExam";
@@ -27,6 +28,7 @@ import PrivacyPolicy from "./pages/PrivacyPolicy";
 import TermsOfService from "./pages/TermsOfService";
 import NotFound from "./pages/NotFound";
 import AuthGuard from "./components/AuthGuard";
+import AdminGuard from "./components/AdminGuard";
 import PWAInstallPrompt from "./components/PWAInstallPrompt";
 import OfflineIndicator from "./components/OfflineIndicator";
 import ResponsiveNavbar from "./components/ResponsiveNavbar";
@@ -117,6 +119,14 @@ const router = createBrowserRouter([
           <Dashboard />
         </AuthGuard>
       </>
+    ),
+  },
+  {
+    path: "/admin",
+    element: (
+      <AdminGuard>
+        <AdminDashboard />
+      </AdminGuard>
     ),
   },
   {

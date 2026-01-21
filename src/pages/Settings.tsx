@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { useNavigate } from 'react-router-dom';
+import { isAuthorizedAdminEmail } from '@/lib/admin-auth';
 import {
   MessageSquare,
   Globe,
@@ -22,7 +23,8 @@ import {
   Trash2,
   Send,
   Star,
-  ChevronRight
+  ChevronRight,
+  Lock
 } from 'lucide-react';
 
 interface Feedback {
@@ -285,6 +287,33 @@ const Settings = () => {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-success font-medium">View drafts</span>
                   <ChevronRight className="w-5 h-5 text-success group-hover:translate-x-1 transition-transform" />
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Admin Dashboard - Authorized Users Only */}
+          {user?.email && isAuthorizedAdminEmail(user.email) && (
+            <Card 
+              className="bg-gradient-to-br from-blue-900/20 to-blue-800/20 backdrop-blur-xl border border-blue-500/50 rounded-3xl shadow-lg p-6 hover:shadow-xl hover:border-blue-400/50 transition-all duration-300 cursor-pointer group" 
+              onClick={() => navigate('/admin')}
+            >
+              <CardHeader className="pb-4">
+                <div className="w-12 h-12 bg-blue-500/20 rounded-lg flex items-center justify-center mb-4">
+                  <Lock className="w-6 h-6 text-blue-400" />
+                </div>
+                <div className="flex items-center gap-2 mb-2">
+                  <CardTitle className="text-xl font-bold text-blue-300">Admin Panel</CardTitle>
+                  <Badge className="bg-blue-500/30 text-blue-300 border border-blue-500/50">Admin</Badge>
+                </div>
+                <CardDescription className="text-blue-200/70">
+                  Manage feedback and system settings
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-0">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-blue-300 font-medium">Access dashboard</span>
+                  <ChevronRight className="w-5 h-5 text-blue-400 group-hover:translate-x-1 transition-transform" />
                 </div>
               </CardContent>
             </Card>

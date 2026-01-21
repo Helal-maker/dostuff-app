@@ -4,14 +4,25 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Loader2, Trash2, MessageCircle } from 'lucide-react';
+import { Loader2, Trash2, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 interface Comment {
   id: string;
-  user_id: string;
+  user_id?: string;
   user_name: string;
-  comment_text: string;
+  comment_text?: string;
+  reply_text?: string;
+  created_at: string;
+  is_admin_reply?: boolean;
+  admin_email?: string;
+}
+
+interface AdminReply {
+  id: string;
+  admin_id: string;
+  admin_email: string;
+  reply_text: string;
   created_at: string;
 }
 
@@ -31,14 +42,45 @@ const FeedbackComments: React.FC<FeedbackCommentsProps> = ({ feedbackId, onComme
   const loadComments = async () => {
     setLoading(true);
     try {
-      const { data, error } = await supabase
+      // Fetch user comments
+      const { data: userComments, error: commentsError } = await supabase
         .from('feedback_comments')
         .select('*')
         .eq('feedback_id', feedbackId)
         .order('created_at', { ascending: true });
 
-      if (error) throw error;
-      setComments(data || []);
+      if (commentsError) throw commentsError;
+
+      // Fetch admin replies
+      const { data: adminReplies, error: repliesError } = await supabase
+        .from('admin_replies')
+        .select('*')
+        .eq('feedback_id', feedbackId)
+        .order('created_at', { ascending: true });
+
+      if (repliesError) throw repliesError;
+
+      // Combine and sort both
+      const combined: Comment[] = [
+        ...(userComments || []).map(c => ({
+          id: c.id,
+          user_id: c.user_id,
+          user_name: c.user_name,
+          comment_text: c.comment_text,
+          created_at: c.created_at,
+          is_admin_reply: false
+        })),
+        ...(adminReplies || []).map(r => ({
+          id: r.id,
+          user_name: 'Do Stuff Team',
+          reply_text: r.reply_text,
+          created_at: r.created_at,
+          is_admin_reply: true,
+          admin_email: r.admin_email
+        }))
+      ].sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+
+      setComments(combined);
     } catch (error) {
       console.error('Error loading comments:', error);
       toast({
@@ -231,25 +273,40 @@ const FeedbackComments: React.FC<FeedbackCommentsProps> = ({ feedbackId, onComme
           {comments.map((comment, index) => (
             <div
               key={comment.id}
-              className="flex gap-3 pb-4 border-b border-border/30 last:border-0 animate-in fade-in slide-in-from-top-2 duration-300"
+              className={`flex gap-3 pb-4 border-b border-border/30 last:border-0 animate-in fade-in slide-in-from-top-2 duration-300 ${
+                comment.is_admin_reply ? 'bg-gradient-to-r from-emerald-500/5 to-emerald-600/5 p-3 rounded-lg border border-emerald-500/20' : ''
+              }`}
               style={{ animationDelay: `${index * 50}ms` }}
             >
-              <Avatar className="w-9 h-9 flex-shrink-0 border border-primary/10">
-                <AvatarFallback className="text-xs font-semibold bg-primary/10">
+              <Avatar className={`w-9 h-9 flex-shrink-0 border ${
+                comment.is_admin_reply ? 'border-emerald-500/50 bg-emerald-500/10' : 'border-primary/10'
+              }`}>
+                <AvatarFallback className={`text-xs font-semibold ${
+                  comment.is_admin_reply ? 'bg-emerald-500/20 text-emerald-600' : 'bg-primary/10'
+                }`}>
                   {getUserInitials(comment.user_name)}
                 </AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-2">
                   <div>
-                    <p className="text-sm font-semibold text-foreground">
-                      {comment.user_name}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <p className={`text-sm font-semibold ${
+                        comment.is_admin_reply ? 'text-emerald-600 dark:text-emerald-400' : 'text-foreground'
+                      }`}>
+                        {comment.user_name}
+                      </p>
+                      {comment.is_admin_reply && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-emerald-500/20 text-emerald-600 dark:bg-emerald-500/30 dark:text-emerald-400 border border-emerald-500/30">
+                          ✓ Official Response
+                        </span>
+                      )}
+                    </div>
                     <p className="text-xs text-muted-foreground hover:text-primary transition-colors">
                       {formatDate(comment.created_at)}
                     </p>
                   </div>
-                  {user?.id === comment.user_id && (
+                  {user?.id === comment.user_id && !comment.is_admin_reply && (
                     <Button
                       variant="ghost"
                       size="sm"
@@ -260,8 +317,12 @@ const FeedbackComments: React.FC<FeedbackCommentsProps> = ({ feedbackId, onComme
                     </Button>
                   )}
                 </div>
-                <p className="text-sm text-foreground mt-2 break-words leading-relaxed hover:text-primary/80 transition-colors">
-                  {comment.comment_text}
+                <p className={`text-sm mt-2 break-words leading-relaxed ${
+                  comment.is_admin_reply 
+                    ? 'text-emerald-700 dark:text-emerald-300' 
+                    : 'text-foreground hover:text-primary/80 transition-colors'
+                }`}>
+                  {comment.comment_text || comment.reply_text}
                 </p>
               </div>
             </div>

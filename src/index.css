@@ -278,6 +278,15 @@ All colors MUST be HSL.
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
+/* Light glass effect for light theme */
+.glass-effect-light {
+  background: rgba(255, 255, 255, 0.6);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+}
+
 /* Scrollbar styles */
 .no-scrollbar::-webkit-scrollbar {
   display: none;
