@@ -99,7 +99,31 @@ const FeedbackList: React.FC<FeedbackListProps> = ({ onSelectFeedback }) => {
 
       if (error) throw error;
 
-      setFeedbacks(data || []);
+      // Recalculate comment counts to include admin replies
+      const feedbacksWithCorrectCounts = await Promise.all(
+        (data || []).map(async (feedback) => {
+          // Fetch user comments
+          const { data: userComments } = await supabase
+            .from('feedback_comments')
+            .select('id', { count: 'exact', head: true })
+            .eq('feedback_id', feedback.id);
+
+          // Fetch admin replies
+          const { data: adminReplies } = await supabase
+            .from('admin_replies')
+            .select('id', { count: 'exact', head: true })
+            .eq('feedback_id', feedback.id);
+
+          const totalCommentCount = (userComments?.length || 0) + (adminReplies?.length || 0);
+          
+          return {
+            ...feedback,
+            comment_count: totalCommentCount,
+          };
+        })
+      );
+
+      setFeedbacks(feedbacksWithCorrectCounts);
       setCurrentPage(1);
     } catch (error) {
       console.error('Error loading feedbacks:', error);

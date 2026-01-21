@@ -55,21 +55,47 @@ const FeedbackBoard = () => {
 
       if (error) throw error;
 
-      // Fetch vote status for current user
-      if (user && data) {
-        const { data: votes } = await supabase
-          .from('feedback_votes')
-          .select('feedback_id')
-          .eq('user_id', user.id);
+      if (data) {
+        // Recalculate comment counts to include admin replies
+        const feedbacksWithCorrectCounts = await Promise.all(
+          data.map(async (feedback) => {
+            // Fetch user comments
+            const { data: userComments } = await supabase
+              .from('feedback_comments')
+              .select('id', { count: 'exact', head: true })
+              .eq('feedback_id', feedback.id);
 
-        const votedIds = votes?.map(v => v.feedback_id) || [];
-        const feedbacksWithVotes = data.map(f => ({
-          ...f,
-          has_voted: votedIds.includes(f.id),
-        }));
-        setFeedbacks(feedbacksWithVotes);
-      } else {
-        setFeedbacks(data || []);
+            // Fetch admin replies
+            const { data: adminReplies } = await supabase
+              .from('admin_replies')
+              .select('id', { count: 'exact', head: true })
+              .eq('feedback_id', feedback.id);
+
+            const totalCommentCount = (userComments?.length || 0) + (adminReplies?.length || 0);
+            
+            return {
+              ...feedback,
+              comment_count: totalCommentCount,
+            };
+          })
+        );
+
+        // Fetch vote status for current user
+        if (user) {
+          const { data: votes } = await supabase
+            .from('feedback_votes')
+            .select('feedback_id')
+            .eq('user_id', user.id);
+
+          const votedIds = votes?.map(v => v.feedback_id) || [];
+          const feedbacksWithVotes = feedbacksWithCorrectCounts.map(f => ({
+            ...f,
+            has_voted: votedIds.includes(f.id),
+          }));
+          setFeedbacks(feedbacksWithVotes);
+        } else {
+          setFeedbacks(feedbacksWithCorrectCounts);
+        }
       }
     } catch (error) {
       console.error('Error loading feedbacks:', error);

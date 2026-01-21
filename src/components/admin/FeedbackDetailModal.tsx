@@ -228,6 +228,25 @@ const FeedbackDetailModal: React.FC<FeedbackDetailModalProps> = ({
       await loadReplies();
       setReplyText('');
 
+      // Update comment count to include both user comments and admin replies
+      const { data: userComments } = await supabase
+        .from('feedback_comments')
+        .select('id', { count: 'exact', head: true })
+        .eq('feedback_id', feedback.id);
+      
+      const { data: adminReplies } = await supabase
+        .from('admin_replies')
+        .select('id', { count: 'exact', head: true })
+        .eq('feedback_id', feedback.id);
+
+      const totalCommentCount = (userComments?.length || 0) + (adminReplies?.length || 0);
+      await supabase
+        .from('feedbacks')
+        .update({ comment_count: totalCommentCount })
+        .eq('id', feedback.id);
+
+      if (onUpdate) onUpdate();
+
       toast({
         title: 'Success',
         description: 'Reply sent successfully',

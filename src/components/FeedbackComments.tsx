@@ -129,10 +129,21 @@ const FeedbackComments: React.FC<FeedbackCommentsProps> = ({ feedbackId, onComme
 
       if (error) throw error;
 
-      // Update comment count
+      // Update comment count to include both user comments and admin replies
+      const { data: allComments } = await supabase
+        .from('feedback_comments')
+        .select('id', { count: 'exact', head: true })
+        .eq('feedback_id', feedbackId);
+      
+      const { data: allReplies } = await supabase
+        .from('admin_replies')
+        .select('id', { count: 'exact', head: true })
+        .eq('feedback_id', feedbackId);
+
+      const totalCommentCount = (allComments?.length || 0) + (allReplies?.length || 0);
       await supabase
         .from('feedbacks')
-        .update({ comment_count: comments.length + 1 })
+        .update({ comment_count: totalCommentCount })
         .eq('id', feedbackId);
 
       setNewComment('');
@@ -166,10 +177,21 @@ const FeedbackComments: React.FC<FeedbackCommentsProps> = ({ feedbackId, onComme
 
       if (error) throw error;
 
-      // Update comment count
+      // Update comment count to include both user comments and admin replies
+      const { data: userComments } = await supabase
+        .from('feedback_comments')
+        .select('id', { count: 'exact', head: true })
+        .eq('feedback_id', feedbackId);
+      
+      const { data: adminReplies } = await supabase
+        .from('admin_replies')
+        .select('id', { count: 'exact', head: true })
+        .eq('feedback_id', feedbackId);
+
+      const totalCommentCount = (userComments?.length || 0) + (adminReplies?.length || 0);
       await supabase
         .from('feedbacks')
-        .update({ comment_count: Math.max(0, comments.length - 1) })
+        .update({ comment_count: Math.max(0, totalCommentCount) })
         .eq('id', feedbackId);
 
       await loadComments();

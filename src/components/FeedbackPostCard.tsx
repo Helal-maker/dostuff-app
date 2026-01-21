@@ -4,9 +4,10 @@ import { supabase } from '@/integrations/supabase/client';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { ThumbsUp, MessageCircle, ChevronDown, ChevronUp, Sparkles, Bug, Zap, TrendingUp, MessageSquare, AlertCircle, CheckCircle2, Clock, Play } from 'lucide-react';
+import { ArrowUp, MessageCircle, ChevronDown, ChevronUp, Sparkles, Bug, Zap, TrendingUp, MessageSquare, AlertCircle, CheckCircle2, Clock, Play } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import FeedbackComments from '@/components/FeedbackComments';
+import { PremiumUpvoteIcon } from '@/components/PremiumUpvoteIcon';
 
 interface Feedback {
   id: string;
@@ -112,11 +113,11 @@ const FeedbackPostCard: React.FC<FeedbackPostCardProps> = ({ feedback, onUpvote,
                 disabled={isVoting}
                 className={`flex flex-col gap-1 h-auto py-2 px-2 rounded-lg transition-all duration-300 ${
                   feedback.has_voted
-                    ? 'bg-primary/10 text-primary hover:bg-primary/20'
+                    ? 'bg-red-100 dark:bg-red-900 text-red-600 dark:text-red-400 hover:bg-red-200 dark:hover:bg-red-800'
                     : 'text-muted-foreground hover:bg-accent/10'
                 }`}
               >
-                <ThumbsUp className="w-5 h-5" />
+                <PremiumUpvoteIcon className="w-5 h-5" filled={feedback.has_voted} />
                 <span className="text-xs font-bold">{feedback.upvote_count}</span>
               </Button>
             </div>
