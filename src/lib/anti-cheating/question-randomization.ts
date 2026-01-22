@@ -73,10 +73,29 @@ export function randomizeQuestionAnswers(question: any): any {
   }
   
   // Shuffle options for matching questions
-  if (question.question_type === 'matching' && question.question_data?.matches) {
+  if (question.question_type === 'matching' && question.question_data?.pairs) {
+    const pairs = question.question_data.pairs || [];
+    
+    // Create indexed right column items with their original positions
+    const rightItemsIndexed = pairs.map((pair: any, idx: number) => ({ 
+      ...pair,
+      _originalIndex: idx 
+    }));
+    
+    // Shuffle the right column items using Fisher-Yates
+    const shuffledRightItems = shuffleArray(rightItemsIndexed);
+    
+    // Create mapping: display position -> original index
+    // This allows us to convert student's answer back to original pair index
+    const rightIndexMapping: { [key: number]: number } = {};
+    shuffledRightItems.forEach((item, displayPosition) => {
+      rightIndexMapping[displayPosition] = item._originalIndex;
+    });
+    
     randomized.question_data = {
       ...question.question_data,
-      matches: shuffleArray(question.question_data.matches)
+      pairs: shuffledRightItems, // Store shuffled pairs directly
+      _rightIndexMapping: rightIndexMapping // Backup mapping for verification
     };
   }
   

@@ -482,6 +482,26 @@ const ExamQuestionBuilder = ({ question, onUpdate, onRemove, language, isDragDis
                         <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
+                    
+                    {/* Question Type Selector */}
+                    <div>
+                      <Label className="text-xs text-teal-600 dark:text-teal-400 font-medium">Question Type</Label>
+                      <select
+                        value={subQ.type || "multiple_choice"}
+                        onChange={(e) => {
+                          const newSubQuestions = [...(question.data.subQuestions || [])];
+                          newSubQuestions[index] = { ...newSubQuestions[index], type: e.target.value };
+                          updateQuestionData('subQuestions', newSubQuestions);
+                        }}
+                        className="w-full mt-1 p-2 rounded-md border border-teal-200 dark:border-teal-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300"
+                      >
+                        <option value="multiple_choice">Multiple Choice</option>
+                        <option value="complete">Complete/Fill Blank</option>
+                        <option value="true_false">True/False</option>
+                      </select>
+                    </div>
+                    
+                    {/* Question Text */}
                     <Input
                       value={subQ.question || ""}
                       onChange={(e) => {
@@ -492,14 +512,61 @@ const ExamQuestionBuilder = ({ question, onUpdate, onRemove, language, isDragDis
                       placeholder="Sub-question text"
                       className="bg-white dark:bg-gray-800 border-teal-200 dark:border-teal-700"
                     />
+                    
+                    {/* Question Type Specific Fields */}
+                    {subQ.type === "multiple_choice" ? (
+                      <div className="space-y-2">
+                        <Label className="text-xs text-teal-600 dark:text-teal-400 font-medium">Options (one per line)</Label>
+                        <Textarea
+                          value={(subQ.options || []).join('\n')}
+                          onChange={(e) => {
+                            const newSubQuestions = [...(question.data.subQuestions || [])];
+                            newSubQuestions[index] = { ...newSubQuestions[index], options: e.target.value.split('\n').filter(o => o.trim()) };
+                            updateQuestionData('subQuestions', newSubQuestions);
+                          }}
+                          placeholder="Option 1&#10;Option 2&#10;Option 3"
+                          rows={3}
+                          className="bg-white dark:bg-gray-800 border-teal-200 dark:border-teal-700"
+                        />
+                        <select
+                          value={subQ.correctOptionIndex || 0}
+                          onChange={(e) => {
+                            const newSubQuestions = [...(question.data.subQuestions || [])];
+                            newSubQuestions[index] = { ...newSubQuestions[index], correctOptionIndex: parseInt(e.target.value) };
+                            updateQuestionData('subQuestions', newSubQuestions);
+                          }}
+                          className="w-full p-2 rounded-md border border-teal-200 dark:border-teal-700 bg-white dark:bg-gray-800 text-sm"
+                        >
+                          <option value="">Select correct option</option>
+                          {(subQ.options || []).map((_: any, optIdx: number) => (
+                            <option key={optIdx} value={optIdx}>Option {optIdx + 1}</option>
+                          ))}
+                        </select>
+                      </div>
+                    ) : (
+                      <Input
+                        value={subQ.answer || ""}
+                        onChange={(e) => {
+                          const newSubQuestions = [...(question.data.subQuestions || [])];
+                          newSubQuestions[index] = { ...newSubQuestions[index], answer: e.target.value };
+                          updateQuestionData('subQuestions', newSubQuestions);
+                        }}
+                        placeholder="Correct answer"
+                        className="bg-white dark:bg-gray-800 border-teal-200 dark:border-teal-700"
+                      />
+                    )}
+                    
+                    {/* Points */}
                     <Input
-                      value={subQ.answer || ""}
+                      type="number"
+                      value={subQ.points || 1}
                       onChange={(e) => {
                         const newSubQuestions = [...(question.data.subQuestions || [])];
-                        newSubQuestions[index] = { ...newSubQuestions[index], answer: e.target.value };
+                        newSubQuestions[index] = { ...newSubQuestions[index], points: parseInt(e.target.value) };
                         updateQuestionData('subQuestions', newSubQuestions);
                       }}
-                      placeholder="Correct answer"
+                      placeholder="Points"
+                      min="1"
                       className="bg-white dark:bg-gray-800 border-teal-200 dark:border-teal-700"
                     />
                   </div>
@@ -507,7 +574,7 @@ const ExamQuestionBuilder = ({ question, onUpdate, onRemove, language, isDragDis
                 
                 <Button
                   onClick={() => {
-                    updateQuestionData('subQuestions', [...(question.data.subQuestions || []), { question: '', answer: '' }]);
+                    updateQuestionData('subQuestions', [...(question.data.subQuestions || []), { question: '', type: 'multiple_choice', options: [], correctOptionIndex: 0, points: 1 }]);
                   }}
                   variant="outline"
                   size="sm"

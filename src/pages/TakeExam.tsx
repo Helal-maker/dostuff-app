@@ -440,6 +440,41 @@ const TakeExam = () => {
               earnedPoints += question.points;
             }
             break;
+          case "paragraph":
+            // For paragraph questions, grade each sub-question
+            const subQuestions = question.question_data.subQuestions || [];
+            let paragraphEarnedPoints = 0;
+            let paragraphTotalPoints = 0;
+            
+            if (Array.isArray(answer)) {
+              subQuestions.forEach((subQ: any, idx: number) => {
+                const subAnswer = answer[idx];
+                const subPoints = subQ.points || 1;
+                paragraphTotalPoints += subPoints;
+                
+                if (subAnswer !== undefined && subAnswer !== null && subAnswer !== "") {
+                  if (subQ.type === "multiple_choice") {
+                    // For multiple choice, compare selected index with correct option
+                    if (subAnswer === subQ.correctOptionIndex) {
+                      paragraphEarnedPoints += subPoints;
+                    }
+                  } else if (subQ.type === "true_false" || subQ.type === "complete" || subQ.type === "fill_blank") {
+                    // For text-based answers, compare lowercase
+                    const correctAns = (subQ.answer || "").toLowerCase().trim();
+                    const userAns = (subAnswer || "").toString().toLowerCase().trim();
+                    if (correctAns === userAns) {
+                      paragraphEarnedPoints += subPoints;
+                    }
+                  }
+                }
+              });
+            }
+            
+            // Scale earned points based on total question points
+            if (paragraphTotalPoints > 0) {
+              earnedPoints += (paragraphEarnedPoints / paragraphTotalPoints) * question.points;
+            }
+            break;
         }
       }
     });

@@ -293,7 +293,7 @@ const Results = () => {
     const firstScore = data[0].score;
     const lastScore = data[data.length - 1].score;
     
-    if (lastScore > firstScore) return "#10b981"; // Green for improvement
+    if (lastScore > firstScore) return "#7C3AED"; // Purple for improvement
     if (lastScore < firstScore) return "#ef4444"; // Red for decline
     return "#3b82f6"; // Blue for stable
   };
@@ -481,7 +481,7 @@ const Results = () => {
   return (
     <div className="flex-1 flex flex-col bg-[#FDFDFF] min-h-screen pb-32 md:pb-10 overflow-x-hidden">
       {/* Dynamic Header Banner */}
-      <div className="relative w-full bg-[#10B981] pt-16 pb-32 px-6 text-center text-white">
+      <div className="relative w-full bg-gradient-to-br from-[#7C3AED] to-[#4F46E5] pt-16 pb-32 px-6 text-center text-white">
         <div className="absolute inset-0 overflow-hidden pointer-events-none opacity-30">
           <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full blur-[120px] -translate-y-1/2 translate-x-1/2"></div>
           <div className="absolute bottom-0 left-0 w-64 h-64 bg-black rounded-full blur-[80px] translate-y-1/2 -translate-x-1/2"></div>
@@ -489,7 +489,7 @@ const Results = () => {
 
         <div className="relative z-10 max-w-2xl mx-auto">
           <div className="inline-flex p-3 bg-white/20 rounded-2xl backdrop-blur-md mb-6 shadow-lg border border-white/30">
-            <Trophy size={32} className="text-white drop-shadow-sm" />
+            <BookOpen size={32} className="text-white drop-shadow-sm" />
           </div>
           <h2 className="text-4xl md:text-6xl font-[1000] mb-4 tracking-tight leading-none">Your Results Dashboard</h2>
           <p className="text-white/80 font-semibold text-base md:text-xl max-w-sm mx-auto">
@@ -551,7 +551,7 @@ const Results = () => {
              {/* Header */}
              <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center space-x-2.5">
-                   <div className="w-2 h-2 rounded-full bg-[#10B981]"></div>
+                   <div className="w-2 h-2 rounded-full bg-[#7C3AED]"></div>
                    <span className="text-[10px] font-black text-gray-400 uppercase tracking-[0.25em]">Overall Performance</span>
                 </div>
                 <div className="bg-[#DCFCE7] text-[#166534] px-3 py-1.5 rounded-full flex items-center space-x-1.5 shadow-sm">
@@ -585,7 +585,7 @@ const Results = () => {
                           ${dayData.isToday 
                             ? 'bg-gradient-to-br from-pink-400 via-pink-500 to-pink-600 shadow-[0_8px_25px_rgba(236,72,153,0.4),0_4px_12px_rgba(236,72,153,0.3)] ring-2 ring-pink-300 ring-offset-1 ring-offset-white'
                             : dayData.hasExams 
-                              ? 'bg-[#10B981] shadow-[0_4px_12px_rgba(16,185,129,0.25),0_2px_6px_rgba(16,185,129,0.2)]' 
+                              ? 'bg-[#7C3AED] shadow-[0_4px_12px_rgba(124,58,237,0.25),0_2px_6px_rgba(124,58,237,0.2)]' 
                               : 'bg-slate-200 shadow-[0_2px_4px_rgba(0,0,0,0.08),0_1px_2px_rgba(0,0,0,0.06)]'}
                         `}
                         style={{ 
@@ -620,7 +620,7 @@ const Results = () => {
                       </div>
                       <div className="space-y-2 text-slate-300">
                         <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-[#10B981] rounded shadow-md"></div>
+                          <div className="w-3 h-3 bg-[#7C3AED] rounded shadow-md"></div>
                           <span className="text-xs">{isTeacher ? 'Days creating exams' : 'Days taking exams'} (darker = more active)</span>
                         </div>
                         <div className="flex items-center gap-2">
@@ -643,7 +643,7 @@ const Results = () => {
                         <span className="text-2xl lg:text-3xl font-black text-gray-300 ml-1">%</span>
                     </div>
                     <div className="bg-gray-900 text-white px-6 py-3 rounded-2xl text-[10px] font-black uppercase tracking-[0.2em] shadow-xl flex items-center space-x-2 hover:scale-105 transition-transform cursor-default">
-                        <Zap size={14} className="text-[#10B981]" fill="currentColor" />
+                        <Zap size={14} className="text-[#7C3AED]" fill="currentColor" />
                         <span>Mastery Level</span>
                     </div>
                 </div>
@@ -651,13 +651,13 @@ const Results = () => {
 
              {/* Stats Footer */}
              <div className="grid grid-cols-2 gap-3 mt-8 pt-8 border-t border-gray-50">
-                <div className="bg-gray-50 rounded-2xl p-4 flex flex-col items-center border border-gray-100 group hover:border-[#10B981]/20 transition-colors">
-                   <Clock size={18} className="text-gray-400 mb-1 group-hover:text-[#10B981] transition-colors" />
+                <div className="bg-gray-50 rounded-2xl p-4 flex flex-col items-center border border-gray-100 group hover:border-[#7C3AED]/20 transition-colors">
+                   <Clock size={18} className="text-gray-400 mb-1 group-hover:text-[#7C3AED] transition-colors" />
                    <span className="text-lg font-[900] text-gray-900">{passRate}%</span>
                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Pass Rate</span>
                 </div>
-                 <div className="bg-gray-50 rounded-2xl p-4 flex flex-col items-center border border-gray-100 group hover:border-[#10B981]/20 transition-colors">
-                   <ShieldCheck size={18} className="text-[#10B981] mb-1" />
+                 <div className="bg-gray-50 rounded-2xl p-4 flex flex-col items-center border border-gray-100 group hover:border-[#7C3AED]/20 transition-colors">
+                   <ShieldCheck size={18} className="text-[#7C3AED] mb-1" />
                    <span className="text-lg font-[900] text-gray-900">{passedAttempts}</span>
                    <span className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Passed</span>
                  </div>
@@ -688,7 +688,7 @@ const Results = () => {
         <div className="flex-1 w-full min-w-0 bg-white rounded-[2.5rem] p-6 lg:p-12 shadow-2xl shadow-gray-200/40 border border-gray-100 flex flex-col mb-24 md:mb-0">
           <div className="mb-12">
             <div className="flex items-center space-x-3 mb-2">
-              <div className="p-2.5 bg-emerald-50 text-[#10B981] rounded-2xl">
+              <div className="p-2.5 bg-violet-50 text-[#7C3AED] rounded-2xl">
                 <BarChart3 size={24} strokeWidth={2.5} />
               </div>
               <h3 className="text-4xl md:text-5xl font-[1000] text-gray-900 tracking-tight leading-none whitespace-nowrap">Analytics & Insights</h3>
@@ -998,11 +998,11 @@ const Results = () => {
               filteredAttempts.map((attempt) => (
                 <div 
                   key={attempt.id} 
-                  className="group flex flex-col lg:flex-row items-stretch justify-between bg-[#F8FAFC] rounded-[2rem] border-2 border-transparent hover:border-[#10B981]/10 hover:bg-white transition-all duration-300 p-2 shadow-sm hover:shadow-xl cursor-pointer"
+                  className="group flex flex-col lg:flex-row items-stretch justify-between bg-[#F8FAFC] rounded-[2rem] border-2 border-transparent hover:border-[#7C3AED]/10 hover:bg-white transition-all duration-300 p-2 shadow-sm hover:shadow-xl cursor-pointer"
                   onClick={() => navigate(`/exam-results/${attempt.id}`)}
                 >
                   <div className="flex items-center space-x-6 p-4 md:p-6 flex-1 min-w-0">
-                    <div className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-xl transition-transform group-hover:scale-110 ${attempt.distinction ? 'text-yellow-600 bg-yellow-100 shadow-inner' : attempt.passed ? 'text-[#10B981] bg-[#10B981]/10 shadow-inner' : 'text-[#F43F5E] bg-[#F43F5E]/10 shadow-inner'}`}>
+                    <div className={`shrink-0 w-14 h-14 rounded-2xl flex items-center justify-center text-xl transition-transform group-hover:scale-110 ${attempt.distinction ? 'text-yellow-600 bg-yellow-100 shadow-inner' : attempt.passed ? 'text-[#7C3AED] bg-[#7C3AED]/10 shadow-inner' : 'text-[#F43F5E] bg-[#F43F5E]/10 shadow-inner'}`}>
                       {attempt.distinction ? <Trophy size={24} strokeWidth={2.5} /> : attempt.passed ? <CheckCircle size={24} strokeWidth={2.5} /> : <XCircle size={24} strokeWidth={2.5} />}
                     </div>
                     <div className="space-y-2 min-w-0 flex-1">
@@ -1034,8 +1034,8 @@ const Results = () => {
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center justify-center p-6 border-t lg:border-t-0 lg:border-l border-gray-100 group-hover:border-[#10B981]/10 transition-colors">
-                    <button className="w-12 h-12 rounded-2xl bg-white shadow-lg border border-gray-100 flex items-center justify-center text-gray-400 group-hover:text-[#10B981] group-hover:scale-110 transition-all active:scale-95">
+                  <div className="flex items-center justify-center p-6 border-t lg:border-t-0 lg:border-l border-gray-100 group-hover:border-[#7C3AED]/10 transition-colors">
+                    <button className="w-12 h-12 rounded-2xl bg-white shadow-lg border border-gray-100 flex items-center justify-center text-gray-400 group-hover:text-[#7C3AED] group-hover:scale-110 transition-all active:scale-95">
                       <ArrowRight size={20} strokeWidth={2.5} />
                     </button>
                   </div>
@@ -1047,7 +1047,7 @@ const Results = () => {
           {filteredAttempts.length > 0 && (
             <div className="mt-12 p-10 bg-[#0F172A] rounded-[2.5rem] relative overflow-hidden text-center flex flex-col items-center border border-white/5">
               <div className="relative z-10 flex flex-col items-center">
-                <div className="bg-[#10B981]/20 text-[#10B981] p-3 rounded-2xl mb-6 shadow-xl backdrop-blur-sm">
+                <div className="bg-[#7C3AED]/20 text-[#7C3AED] p-3 rounded-2xl mb-6 shadow-xl backdrop-blur-sm">
                    <Zap size={28} fill="currentColor" />
                 </div>
                 <h4 className="text-2xl font-[1000] text-white mb-3 tracking-tight">Ready for the Next Challenge?</h4>
@@ -1056,7 +1056,7 @@ const Results = () => {
                 </p>
                 <button 
                   onClick={() => navigate('/exams')}
-                  className="px-10 py-4 bg-white text-gray-900 font-[1000] rounded-2xl shadow-[0_20px_50px_rgba(255,255,255,0.1)] hover:bg-[#10B981] hover:text-white hover:shadow-[#10B981]/30 active:scale-95 transition-all flex items-center justify-center space-x-3 uppercase tracking-[0.2em] text-[10px]"
+                  className="px-10 py-4 bg-white text-gray-900 font-[1000] rounded-2xl shadow-[0_20px_50px_rgba(255,255,255,0.1)] hover:bg-[#7C3AED] hover:text-white hover:shadow-[#7C3AED]/30 active:scale-95 transition-all flex items-center justify-center space-x-3 uppercase tracking-[0.2em] text-[10px]"
                 >
                   <span>Explore More Exams</span>
                   <ArrowRight size={16} strokeWidth={3} />

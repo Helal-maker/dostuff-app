@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { X, BookOpen } from "lucide-react";
 
 interface Question {
   id: string;
@@ -25,6 +26,7 @@ interface Props {
 
 const ExamQuestionRenderer = ({ question, answer, onAnswerChange, language, colorScheme }: Props) => {
   const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [showParagraphSidebar, setShowParagraphSidebar] = useState(true);
 
   const getQuestionTypeLabel = (type: string) => {
     switch (type) {
@@ -263,103 +265,163 @@ const ExamQuestionRenderer = ({ question, answer, onAnswerChange, language, colo
     const subQuestions = question.question_data.subQuestions || [];
     
     return (
-      <div className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 relative">
+        {/* Left Column - Sub Questions */}
+        <div className="lg:col-span-2 space-y-6">
+          <div className="mb-4 lg:hidden">
+            <button
+              onClick={() => setShowParagraphSidebar(!showParagraphSidebar)}
+              className="group flex items-center gap-3 p-3 rounded-xl bg-gradient-to-r from-purple-50 to-pink-50 dark:from-purple-900/30 dark:to-pink-900/30 border-2 border-purple-200 dark:border-purple-700 hover:border-purple-400 dark:hover:border-purple-500 transition-all duration-200 shadow-sm hover:shadow-md w-full"
+            >
+              <BookOpen className="w-5 h-5 text-purple-600 dark:text-purple-400" />
+              <span className="text-sm font-semibold text-purple-700 dark:text-purple-300">Show Passage</span>
+              <div className={`ml-auto transition-transform ${showParagraphSidebar ? 'rotate-180' : ''}`}>
+                <span className="text-lg text-purple-600 dark:text-purple-400">→</span>
+              </div>
+            </button>
+          </div>
+          
+          {/* Sub Questions */}
+          <div className="space-y-6">
+            {subQuestions.map((subQ: any, index: number) => (
+              <div key={index} className="space-y-4">
+                <div className="flex justify-between items-baseline">
+                  <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
+                    Question {index + 1}
+                  </span>
+                  <span className="text-xs font-semibold text-primary dark:text-purple-400">
+                    {subQ.points || question.points} Points
+                  </span>
+                </div>
+                <h4 className="text-lg font-bold text-gray-900 dark:text-white leading-snug">
+                  {subQ.question}
+                </h4>
+                
+                {subQ.type === "multiple_choice" ? (
+                  <div className="space-y-3">
+                    {(subQ.options || []).map((option: string, optIndex: number) => {
+                      const subAnswer = answer?.[index];
+                      const isSelected = subAnswer === optIndex;
+                      
+                      return (
+                        <label key={optIndex} className="group relative flex items-center p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200">
+                          <input
+                            className="peer sr-only"
+                            type="radio"
+                            name={`sub-question-${index}`}
+                            checked={isSelected}
+                            onChange={() => {
+                              const newAnswer = [...(answer || [])];
+                              newAnswer[index] = optIndex;
+                              onAnswerChange(newAnswer);
+                            }}
+                          />
+                          <div className={`flex items-center justify-center w-6 h-6 rounded-full border-2 mr-4 transition-all ${
+                            isSelected
+                              ? 'border-primary bg-primary text-white'
+                              : 'border-gray-300 dark:border-gray-600 group-hover:border-primary'
+                          }`}>
+                            {isSelected && (
+                              <span className="material-icons-round text-sm">check</span>
+                            )}
+                          </div>
+                          <span className={`font-medium flex-1 ${
+                            isSelected
+                              ? 'text-primary dark:text-purple-300'
+                              : 'text-gray-700 dark:text-gray-300'
+                          }`}>
+                            {option}
+                          </span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                ) : subQ.type === "complete" || subQ.type === "fill_blank" ? (
+                  <Input
+                    value={answer?.[index] || ""}
+                    onChange={(e) => {
+                      const newAnswer = [...(answer || [])];
+                      newAnswer[index] = e.target.value;
+                      onAnswerChange(newAnswer);
+                    }}
+                    placeholder="Enter your answer..."
+                    className="text-base text-purple-700 dark:text-purple-200"
+                  />
+                ) : (
+                  <Textarea
+                    value={answer?.[index] || ""}
+                    onChange={(e) => {
+                      const newAnswer = [...(answer || [])];
+                      newAnswer[index] = e.target.value;
+                      onAnswerChange(newAnswer);
+                    }}
+                    placeholder="Enter your answer..."
+                    rows={3}
+                    className="text-base text-purple-700 dark:text-purple-200"
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+        </div>
+        
+        {/* Right Column - Reading Passage Sidebar */}
         {paragraph && (
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <span className="bg-purple-100 dark:bg-purple-900/30 text-primary dark:text-purple-300 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wide">
-                Passage
-              </span>
-              <span className="text-gray-500 dark:text-gray-400 text-xs font-medium">~3 min read</span>
+          <div className={`lg:col-span-1 transition-all duration-300 ${
+            !showParagraphSidebar && 'hidden'
+          } lg:block`}>
+            <div className="sticky top-8 h-fit bg-white dark:bg-gray-900 shadow-xl rounded-2xl border-2 border-purple-200 dark:border-purple-700 overflow-hidden">
+              {/* Header */}
+              <div className="bg-gradient-to-r from-purple-500 to-pink-500 p-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-white" />
+                  <h2 className="text-lg font-bold text-white">Reading Passage</h2>
+                </div>
+                <button
+                  onClick={() => setShowParagraphSidebar(false)}
+                  className="lg:hidden p-1 hover:bg-white/20 rounded-lg transition-colors"
+                >
+                  <X className="w-5 h-5 text-white" />
+                </button>
+              </div>
+              
+              {/* Content */}
+              <div className="p-6 overflow-y-auto max-h-[calc(100vh-200px)] space-y-4">
+                <div className="prose prose-sm prose-purple dark:prose-invert max-w-none text-gray-700 dark:text-gray-300 leading-relaxed space-y-4">
+                  {paragraph?.split('\n\n').map((para: string, idx: number) => (
+                    <p key={idx} className="text-sm leading-relaxed">
+                      {para}
+                    </p>
+                  ))}
+                </div>
+              </div>
+              
+              {/* Footer */}
+              <div className="border-t border-purple-200 dark:border-purple-700 p-4 bg-gray-50 dark:bg-gray-800">
+                <p className="text-xs text-gray-600 dark:text-gray-400 text-center">
+                  📖 Reference text while answering
+                </p>
+              </div>
             </div>
-            <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3">Reading Comprehension</h3>
-            <div className="prose prose-sm prose-purple dark:prose-invert max-w-none text-gray-600 dark:text-gray-300 leading-relaxed">
-              <p>{paragraph}</p>
-            </div>
-            <div className="h-px w-full bg-gray-100 dark:bg-gray-700 my-6"></div>
           </div>
         )}
-        
-        <div className="space-y-6">
-          {subQuestions.map((subQ: any, index: number) => (
-            <div key={index} className="space-y-4">
-              <div className="flex justify-between items-baseline">
-                <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                  Question {index + 1}
-                </span>
-                <span className="text-xs font-semibold text-primary dark:text-purple-400">
-                  {subQ.points || question.points} Points
-                </span>
-              </div>
-              <h4 className="text-lg font-bold text-gray-900 dark:text-white leading-snug">
-                {subQ.question}
-              </h4>
-              
-              {subQ.type === "multiple_choice" ? (
-                <div className="space-y-3">
-                  {(subQ.options || []).map((option: string, optIndex: number) => {
-                    const subAnswer = answer?.[index];
-                    const isSelected = subAnswer === optIndex;
-                    
-                    return (
-                      <label key={optIndex} className="group relative flex items-center p-4 rounded-2xl border-2 cursor-pointer transition-all duration-200">
-                        <input
-                          className="peer sr-only"
-                          type="radio"
-                          name={`sub-question-${index}`}
-                          checked={isSelected}
-                          onChange={() => {
-                            const newAnswer = [...(answer || [])];
-                            newAnswer[index] = optIndex;
-                            onAnswerChange(newAnswer);
-                          }}
-                        />
-                        <div className={`flex items-center justify-center w-6 h-6 rounded-full border-2 mr-4 transition-all ${
-                          isSelected
-                            ? 'border-primary bg-primary text-white'
-                            : 'border-gray-300 dark:border-gray-600 group-hover:border-primary'
-                        }`}>
-                          {isSelected && (
-                            <span className="material-icons-round text-sm">check</span>
-                          )}
-                        </div>
-                        <span className={`font-medium flex-1 ${
-                          isSelected
-                            ? 'text-primary dark:text-purple-300'
-                            : 'text-gray-700 dark:text-gray-300'
-                        }`}>
-                          {option}
-                        </span>
-                      </label>
-                    );
-                  })}
-                </div>
-              ) : (
-                <Input
-                  value={answer?.[index] || ""}
-                  onChange={(e) => {
-                    const newAnswer = [...(answer || [])];
-                    newAnswer[index] = e.target.value;
-                    onAnswerChange(newAnswer);
-                  }}
-                  placeholder="Enter your answer..."
-                  className="text-base text-purple-700 dark:text-purple-200"
-                />
-              )}
-            </div>
-          ))}
-        </div>
       </div>
     );
   };
 
   const renderMatching = () => {
     const pairs = question.question_data.pairs || [];
+    
+    // Extract left items (always in original order in Column A)
     const leftItems = pairs.map((pair: any) => pair.left);
+    
+    // Extract right items with their original indices
+    // If pairs were shuffled, they'll have _originalIndex; otherwise use the current index
     const rightItemsWithIndex = pairs.map((pair: any, idx: number) => ({ 
       text: pair.right, 
-      originalIndex: idx 
+      originalIndex: pair._originalIndex !== undefined ? pair._originalIndex : idx
     }));
+    
     const matches = answer || {};
 
     return (
@@ -411,7 +473,7 @@ const ExamQuestionRenderer = ({ question, answer, onAnswerChange, language, colo
             })}
           </div>
 
-          {/* Column B */}
+          {/* Column B - Randomized Order */}
           <div className="space-y-2">
             <h4 className="font-medium text-gray-900 dark:text-white">Column B</h4>
             {rightItemsWithIndex.map((item: { text: string; originalIndex: number }) => {

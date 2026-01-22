@@ -150,6 +150,32 @@ const ExamResults = () => {
         const ua = (userAnswer || '').toString().trim().toLowerCase();
         return ua === correct;
       }
+      case 'paragraph': {
+        const subQuestions = qdata.subQuestions || [];
+        if (!Array.isArray(userAnswer)) return false;
+        
+        let allCorrect = true;
+        subQuestions.forEach((subQ: any, idx: number) => {
+          const subAnswer = userAnswer[idx];
+          if (subAnswer === undefined || subAnswer === null || subAnswer === "") {
+            allCorrect = false;
+            return;
+          }
+          
+          if (subQ.type === "multiple_choice") {
+            if (subAnswer !== subQ.correctOptionIndex) {
+              allCorrect = false;
+            }
+          } else {
+            const correctAns = (subQ.answer || "").toLowerCase().trim();
+            const userAns = (subAnswer || "").toString().toLowerCase().trim();
+            if (correctAns !== userAns) {
+              allCorrect = false;
+            }
+          }
+        });
+        return allCorrect;
+      }
       default:
         return false;
     }
